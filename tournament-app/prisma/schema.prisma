@@ -1,4 +1,4 @@
-  generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -62,119 +62,118 @@ enum DrawRule {
 
 // USERS
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  role      String   @default("USER")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  OrganizedTournaments Tournament[] @relation("Organizer")
-  notifications Notification[]
+  id                   Int            @id @default(autoincrement())
+  email                String         @unique
+  name                 String
+  role                 String         @default("USER")
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  OrganizedTournaments Tournament[]   @relation("Organizer")
+  notifications        Notification[]
 }
-
 
 // TOURNAMENTS
 model Tournament {
-  id          Int      @id @default(autoincrement())
-  name        String
-  slug        String   @unique
-  status      TournamentStatus @default(DRAFT)
-  organizerId Int      
-  organizer   User     @relation(fields: [organizerId], references: [id])
-  startDate   DateTime
-  endDate     DateTime?
-  registrationOpen DateTime
+  id                Int                 @id @default(autoincrement())
+  name              String
+  slug              String              @unique
+  status            TournamentStatus    @default(DRAFT)
+  organizerId       Int
+  organizer         User                @relation("Organizer", fields: [organizerId], references: [id])
+  startDate         DateTime
+  endDate           DateTime?
+  registrationOpen  DateTime
   registrationClose DateTime?
-  maxParticipants Int
-  needsContacy Boolean @default(false)
-  drawRule   DrawRule @default(DRAW_NOT_ALLOWED)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  participants Participant[]
-  registrations Registration[]
-  rounds Round[]
-  matches Match[]
-  history TournamentHistory[]
+  maxParticipants   Int
+  needsContacy      Boolean             @default(false)
+  drawRule          DrawRule            @default(DRAW_NOT_ALLOWED)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  participants      Participant[]
+  registrations     Registration[]
+  rounds            Round[]
+  matches           Match[]
+  history           TournamentHistory[]
 }
-
 
 // Registration
 
 model Registration {
-  id           Int      @id @default(autoincrement())
-  tournamentId Int      
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  name        String
-  age         Int
-  club       String?
-  email      String?
-  phone      String?
-  status      RegistrationStatus @default(PENDING)
-  createdAt    DateTime @default(now())
-  participant Participant?
+  id           Int                @id @default(autoincrement())
+  tournamentId Int
+  tournament   Tournament         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  name         String
+  age          Int
+  club         String?
+  email        String?
+  phone        String?
+  status       RegistrationStatus @default(PENDING)
+  createdAt    DateTime           @default(now())
+  participant  Participant?
 }
-
 
 // PARTICIPANT
 
 model Participant {
-  id           Int      @id @default(autoincrement())
-  tournamentId Int      
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  registrationId Int? @unique
-  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
-  name        String
-  age         Int
-  club       String?
-  email      String?
-  phone      String?
-  status      ParticipantStatus @default(ACTIVE)
-  createdAt    DateTime @default(now())
-  player1Matches Match[] @relation("Player1")
-  player2Matches Match[] @relation("Player2")
-  matchesWon Match[] @relation("Winner")
+  id             Int               @id @default(autoincrement())
+  tournamentId   Int
+  tournament     Tournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  registrationId Int?              @unique
+  registration   Registration?     @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  name           String
+  age            Int
+  club           String?
+  email          String?
+  phone          String?
+  status         ParticipantStatus @default(ACTIVE)
+  createdAt      DateTime          @default(now())
+  player1Matches Match[]           @relation("Player1")
+  player2Matches Match[]           @relation("Player2")
+  matchesWon     Match[]           @relation("Winner")
+
   @@index([tournamentId])
 }
 
 //Round
 
 model Round {
-  id           Int      @id @default(autoincrement())
-  tournamentId Int      
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   roundNumber  Int
-  name        String
-  createdAt    DateTime @default(now())
-  matches Match[]
+  name         String
+  createdAt    DateTime   @default(now())
+  matches      Match[]
+
   @@unique([tournamentId, roundNumber])
 }
 
-
 // Match
-model   Match {
-  id           Int      @id @default(autoincrement())
-  tournamentId Int      
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  roundId      Int
-  round        Round @relation( fields: [roundId], references: [id], onDelete: Cascade)
-  position     Int
-  player1Id    Int?
-  player1      Participant? @relation("Player1", fields: [player1Id], references: [id])
-  player2Id    Int?
-  player2      Participant? @relation("Player2", fields: [player2Id], references: [id])
-  winnerId     Int?
-  winner       Participant? @relation("Winner", fields: [winnerId], references: [id])
-  player1Score Int?
-  player2Score Int?
-  resultType   ResultType?
+model Match {
+  id                  Int          @id @default(autoincrement())
+  tournamentId        Int
+  tournament          Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  roundId             Int
+  round               Round        @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  position            Int
+  player1Id           Int?
+  player1             Participant? @relation("Player1", fields: [player1Id], references: [id])
+  player2Id           Int?
+  player2             Participant? @relation("Player2", fields: [player2Id], references: [id])
+  winnerId            Int?
+  winner              Participant? @relation("Winner", fields: [winnerId], references: [id])
+  player1Score        Int?
+  player2Score        Int?
+  resultType          ResultType?
   player1PenaltyScore Int?
   player2PenaltyScore Int?
-  status       MatchStatus @default(WAITING)
-  scheduledAt  DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  result      MatchResult?
+  status              MatchStatus  @default(WAITING)
+  scheduledAt         DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  result              MatchResult?
+
   @@unique([roundId, position])
   @@index([tournamentId])
 }
@@ -188,7 +187,6 @@ model MatchResult {
   createdAt DateTime @default(now())
 }
 
-
 // Notification
 model Notification {
   id        Int      @id @default(autoincrement())
@@ -199,12 +197,11 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
-
 // Tournament History
 model TournamentHistory {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   tournamentId Int
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   action       String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
 }
