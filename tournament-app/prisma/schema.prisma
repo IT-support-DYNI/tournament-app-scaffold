@@ -16,32 +16,49 @@ enum UserRole {
 }
 
 enum TournamentStatus {
-  Draft
-  Registration_Open
-  Registration_Closed
-  In_Progress
-  Completed
-  Canceled
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  IN_PROGRESS
+  ONGOING
+  COMPLETED
 }
 
 enum RegistrationStatus {
-  Pending
-  Approved
-  Rejected
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
 }
 
 enum ParticipantStatus {
-  Active
-  Inactive
-  Banned
+  ACTIVE
+  INACTIVE
+  ELIMINATED
+  BANNED
 }
 
 enum MatchStatus {
-  Scheduled
-  Completed
-  Canceled
+  WAITING
+  READY
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  BYE
 }
 
+enum ResultType {
+  NORMAL
+  DRAW
+  WALKOVER
+  PENALTY
+}
+
+enum DrawRule {
+  DRAW_ALLOWED
+  DRAW_NOT_ALLOWED
+  PENALTY_DECIDES
+}
 
 // USERS
 model User {
@@ -52,12 +69,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   OrganizedTournaments Tournament[] @relation("Organizer")
-  registrations Registration[]
-  participants Participant[]
   notifications Notification[]
-  matcheswon Match[] @relation("Winner")
-
-  tournaments Tournament[]
 }
 
 
@@ -66,12 +78,16 @@ model Tournament {
   id          Int      @id @default(autoincrement())
   name        String
   slug        String   @unique
-  status      TournamentStatus @default(Draft)
+  status      TournamentStatus @default(DRAFT)
   organizerId Int      
-  organizer   User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  organizer   User     @relation(fields: [organizerId], references: [id])
   startDate   DateTime
-  endDate     DateTime
+  endDate     DateTime?
+  registrationOpen DateTime
+  registrationClose DateTime?
   maxParticipants Int
+  needsContacy Boolean @default(false)
+  drawRule   DrawRule @default(DRAW_NOT_ALLOWED)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   participants Participant[]
@@ -79,8 +95,6 @@ model Tournament {
   rounds Round[]
   matches Match[]
   history TournamentHistory[]
-
-  users User[] @relation("Organizer")
 }
 
 
@@ -90,11 +104,14 @@ model Registration {
   id           Int      @id @default(autoincrement())
   tournamentId Int      
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  userId       Int      
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status       String   @default("Pending")
+  name        String
+  age         Int
+  club       String?
+  email      String?
+  phone      String?
+  status      RegistrationStatus @default(PENDING)
   createdAt    DateTime @default(now())
-  @@unique([tournamentId, userId])
+  participant Participant?
 }
 
 
@@ -104,14 +121,19 @@ model Participant {
   id           Int      @id @default(autoincrement())
   tournamentId Int      
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  userId       Int      
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status       String   @default("Active")
+  registrationId Int? @unique
+  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  name        String
+  age         Int
+  club       String?
+  email      String?
+  phone      String?
+  status      ParticipantStatus @default(ACTIVE)
   createdAt    DateTime @default(now())
-  matchesasPlayer1 Match[] @relation("Player1")
-  matchesasPlayer2 Match[] @relation("Player2")
-  matcheswon Match[] @relation("Winner")
-  @@unique([tournamentId, userId])
+  player1Matches Match[] @relation("Player1")
+  player2Matches Match[] @relation("Player2")
+  matchesWon Match[] @relation("Winner")
+  @@index([tournamentId])
 }
 
 //Round
@@ -123,7 +145,7 @@ model Round {
   roundNumber  Int
   name        String
   createdAt    DateTime @default(now())
-  matches Match[] @relation("RoundRelation")
+  matches Match[]
   @@unique([tournamentId, roundNumber])
 }
 
@@ -134,23 +156,27 @@ model   Match {
   tournamentId Int      
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   roundId      Int
-  round        Round @relation("RoundRelation", fields: [roundId], references: [id], onDelete: Cascade)
-  player1Id    Int
-  player1      Participant @relation("Player1", fields: [player1Id], references: [id])
-  player2Id    Int
-  player2      Participant @relation("Player2", fields: [player2Id], references: [id])
+  round        Round @relation( fields: [roundId], references: [id], onDelete: Cascade)
+  position     Int
+  player1Id    Int?
+  player1      Participant? @relation("Player1", fields: [player1Id], references: [id])
+  player2Id    Int?
+  player2      Participant? @relation("Player2", fields: [player2Id], references: [id])
   winnerId     Int?
   winner       Participant? @relation("Winner", fields: [winnerId], references: [id])
   player1Score Int?
   player2Score Int?
-  status       MatchStatus @default(Scheduled)
+  resultType   ResultType?
+  player1PenaltyScore Int?
+  player2PenaltyScore Int?
+  status       MatchStatus @default(WAITING)
   scheduledAt  DateTime?
   completedAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  results      MatchResult?
-
-  users User[] @relation("Winner")
+  result      MatchResult?
+  @@unique([roundId, position])
+  @@index([tournamentId])
 }
 
 // Match Result
