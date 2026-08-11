@@ -1,9 +1,11 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from "next";
+import "./globals.css";
+
+import Navbar from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: 'Tournament App',
-  description: 'Tournament application scaffold',
+  title: "Tournament App",
+  description: "Tournament management application",
 };
 
 export default function RootLayout({
@@ -13,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-gray-100 text-gray-900">
+        <Navbar />
+
+        {children}
+      </body>
     </html>
   );
 }
