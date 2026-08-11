@@ -1,4 +1,4 @@
-generator client {
+  generator client {
   provider = "prisma-client-js"
 }
 
@@ -7,8 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Test {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
+model User {
+  id String
+  
 }
