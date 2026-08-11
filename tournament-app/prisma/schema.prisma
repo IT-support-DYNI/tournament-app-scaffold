@@ -85,7 +85,7 @@ model Tournament {
   registrationOpen  DateTime
   registrationClose DateTime?
   maxParticipants   Int
-  needsContacy      Boolean             @default(false)
+  needsContact      Boolean             @default(false)
   drawRule          DrawRule            @default(DRAW_NOT_ALLOWED)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
