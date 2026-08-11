@@ -7,7 +7,178 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMS
+
+enum UserRole {
+  USER
+  ADMIN
+  ORGANIZER
+}
+
+enum TournamentStatus {
+  Draft
+  Registration_Open
+  Registration_Closed
+  In_Progress
+  Completed
+  Canceled
+}
+
+enum RegistrationStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum ParticipantStatus {
+  Active
+  Inactive
+  Banned
+}
+
+enum MatchStatus {
+  Scheduled
+  Completed
+  Canceled
+}
+
+
+// USERS
 model User {
-  id String
-  
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  OrganizedTournaments Tournament[] @relation("Organizer")
+  registrations Registration[]
+  participants Participant[]
+  notifications Notification[]
+  matcheswon Match[] @relation("Winner")
+
+  tournaments Tournament[]
+}
+
+
+// TOURNAMENTS
+model Tournament {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  status      TournamentStatus @default(Draft)
+  organizerId Int      
+  organizer   User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+  maxParticipants Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  participants Participant[]
+  registrations Registration[]
+  rounds Round[]
+  matches Match[]
+  history TournamentHistory[]
+
+  users User[] @relation("Organizer")
+}
+
+
+// Registration
+
+model Registration {
+  id           Int      @id @default(autoincrement())
+  tournamentId Int      
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId       Int      
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       String   @default("Pending")
+  createdAt    DateTime @default(now())
+  @@unique([tournamentId, userId])
+}
+
+
+// PARTICIPANT
+
+model Participant {
+  id           Int      @id @default(autoincrement())
+  tournamentId Int      
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId       Int      
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       String   @default("Active")
+  createdAt    DateTime @default(now())
+  matchesasPlayer1 Match[] @relation("Player1")
+  matchesasPlayer2 Match[] @relation("Player2")
+  matcheswon Match[] @relation("Winner")
+  @@unique([tournamentId, userId])
+}
+
+//Round
+
+model Round {
+  id           Int      @id @default(autoincrement())
+  tournamentId Int      
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  roundNumber  Int
+  name        String
+  createdAt    DateTime @default(now())
+  matches Match[] @relation("RoundRelation")
+  @@unique([tournamentId, roundNumber])
+}
+
+
+// Match
+model   Match {
+  id           Int      @id @default(autoincrement())
+  tournamentId Int      
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  roundId      Int
+  round        Round @relation("RoundRelation", fields: [roundId], references: [id], onDelete: Cascade)
+  player1Id    Int
+  player1      Participant @relation("Player1", fields: [player1Id], references: [id])
+  player2Id    Int
+  player2      Participant @relation("Player2", fields: [player2Id], references: [id])
+  winnerId     Int?
+  winner       Participant? @relation("Winner", fields: [winnerId], references: [id])
+  player1Score Int?
+  player2Score Int?
+  status       MatchStatus @default(Scheduled)
+  scheduledAt  DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  results      MatchResult?
+
+  users User[] @relation("Winner")
+}
+
+// Match Result
+model MatchResult {
+  id        Int      @id @default(autoincrement())
+  matchId   Int      @unique
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+
+// Notification
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+
+// Tournament History
+model TournamentHistory {
+  id           Int      @id @default(autoincrement())
+  tournamentId Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  action       String
+  createdAt    DateTime @default(now())
 }
