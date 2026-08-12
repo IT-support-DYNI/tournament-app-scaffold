@@ -32,6 +32,13 @@ export default async function Navbar() {
             Tournaments
           </Link>
 
+          <Link
+            href="/tournaments/new"
+            className="text-sm text-gray-700 hover:text-black"
+          >
+            Create Tournament
+          </Link>
+
           {session ? (
             <>
               <Link
