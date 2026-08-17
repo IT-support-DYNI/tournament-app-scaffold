@@ -537,6 +537,19 @@ export async function PATCH(
             );
           }
 
+          /*
+           * A draw has no winner, so there's nothing to
+           * advance in a single-elimination bracket. Rather
+           * than "completing" the match with no result,
+           * leave it READY so it can simply be resubmitted
+           * — with a decisive result, or another draw — for
+           * as many replays as it takes. Both players are
+           * still assigned, so this reuses the normal result
+           * form untouched; it's never treated as a
+           * "correction" since the match never left READY.
+           */
+          const isDraw = finalWinnerId === null;
+
           const completedMatch =
             await tx.match.update({
               where: {
@@ -553,8 +566,12 @@ export async function PATCH(
                   parsedPlayer2PenaltyScore,
                 resultType,
                 winnerId: finalWinnerId,
-                status: "COMPLETED",
-                completedAt: new Date(),
+                status: isDraw
+                  ? "READY"
+                  : "COMPLETED",
+                completedAt: isDraw
+                  ? null
+                  : new Date(),
               },
               include: {
                 round: true,
@@ -568,9 +585,11 @@ export async function PATCH(
           await tx.tournamentHistory.create({
             data: {
               tournamentId,
-              action: isCorrection
-                ? `Result corrected for ${match.round.name}, Match ${match.position}. Winner: ${completedMatch.winner?.name ?? "draw / no winner"}.`
-                : `${match.round.name}, Match ${match.position} completed. Winner: ${completedMatch.winner?.name ?? "Draw"}.`,
+              action: isDraw
+                ? `${match.round.name}, Match ${match.position} ended in a draw${isCorrection ? " (corrected)" : ""}. Awaiting a replay.`
+                : isCorrection
+                  ? `Result corrected for ${match.round.name}, Match ${match.position}. Winner: ${completedMatch.winner?.name}.`
+                  : `${match.round.name}, Match ${match.position} completed. Winner: ${completedMatch.winner?.name}.`,
             },
           });
 
@@ -706,6 +725,32 @@ export async function PATCH(
                   data: {
                     tournamentId,
                     action: `Tournament completed. Champion: ${completedMatch.winner?.name ?? "participant #" + finalWinnerId}.`,
+                  },
+                }
+              );
+            } else if (isCorrection) {
+              /*
+               * The final was previously decided (that's
+               * the only way isCorrection is true here) and
+               * has just been corrected to a draw — the
+               * tournament can no longer claim a champion
+               * until the final is replayed.
+               */
+              await tx.tournament.update({
+                where: {
+                  id: tournamentId,
+                },
+                data: {
+                  status: "IN_PROGRESS",
+                  championId: null,
+                },
+              });
+
+              await tx.tournamentHistory.create(
+                {
+                  data: {
+                    tournamentId,
+                    action: `Tournament reopened — the final was corrected to a draw and needs a replay.`,
                   },
                 }
               );

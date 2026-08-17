@@ -418,6 +418,15 @@ export default function MatchPage() {
             </div>
           )}
 
+          {match.status !== "COMPLETED" &&
+            match.resultType === "DRAW" && (
+              <div className="mb-6 rounded-md bg-blue-50 p-4 text-sm text-blue-800">
+                This match ended in a draw and needs a
+                replay. Submit a decisive result below —
+                or select Draw again if it's still tied.
+              </div>
+            )}
+
           {/* Result form */}
 
           <form
