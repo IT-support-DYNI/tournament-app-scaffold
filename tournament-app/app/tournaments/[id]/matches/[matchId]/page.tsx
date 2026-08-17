@@ -247,6 +247,19 @@ export default function MatchPage() {
       return;
     }
 
+    const isCorrection =
+      match.status === "COMPLETED";
+
+    if (isCorrection) {
+      const confirmed = window.confirm(
+        "This match has already been completed. Resubmitting will overwrite the result and may reset any later rounds that were built on the previous winner. Continue?"
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
     try {
       setSubmitting(true);
       setError("");
@@ -260,6 +273,7 @@ export default function MatchPage() {
               "application/json",
           },
           body: JSON.stringify({
+            confirmCorrection: isCorrection,
             player1Score:
               player1Score === ""
                 ? null
@@ -392,6 +406,15 @@ export default function MatchPage() {
           {error && (
             <div className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-700">
               {error}
+            </div>
+          )}
+
+          {match.status === "COMPLETED" && (
+            <div className="mb-6 rounded-md bg-amber-50 p-4 text-sm text-amber-800">
+              This match is already completed. Submitting
+              a new result will correct it and may reset
+              any later rounds that were built on the
+              previous winner.
             </div>
           )}
 
@@ -630,7 +653,9 @@ export default function MatchPage() {
             >
               {submitting
                 ? "Submitting..."
-                : "Submit Result"}
+                : match.status === "COMPLETED"
+                  ? "Correct Result"
+                  : "Submit Result"}
             </button>
           </form>
         </div>

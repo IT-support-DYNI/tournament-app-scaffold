@@ -92,17 +92,13 @@ export async function PATCH(
     }
 
     // --------------------------------------------------
-    // 4. Don't allow a completed match to be submitted again
+    // 4. A completed match can only be resubmitted as an
+    //    explicit correction (see step 6b) — this prevents
+    //    accidental double-submits from silently overwriting
+    //    a result.
     // --------------------------------------------------
 
-    if (match.status === "COMPLETED") {
-      return NextResponse.json(
-        {
-          error: "This match has already been completed.",
-        },
-        { status: 400 }
-      );
-    }
+    const isCorrection = match.status === "COMPLETED";
 
     // --------------------------------------------------
     // 5. A normal match needs two players
@@ -132,7 +128,25 @@ export async function PATCH(
       resultType,
       winnerId,
       notes,
+      confirmCorrection,
     } = body;
+
+    // --------------------------------------------------
+    // 6b. Completed matches require an explicit correction
+    //     confirmation. Correcting a result may reset any
+    //     later rounds that were built on the old winner.
+    // --------------------------------------------------
+
+    if (isCorrection && confirmCorrection !== true) {
+      return NextResponse.json(
+        {
+          error:
+            "This match has already been completed. Resubmitting will overwrite the result and may reset any later rounds built on the previous winner. Resend with confirmCorrection: true to proceed.",
+          requiresConfirmation: true,
+        },
+        { status: 409 }
+      );
+    }
 
     const allowedResultTypes = [
       "NORMAL",
@@ -378,9 +392,151 @@ export async function PATCH(
     // 10. Save everything in one transaction
     // --------------------------------------------------
 
+    const previousWinnerId = match.winnerId;
+
     const updatedMatch =
       await prisma.$transaction(
         async (tx) => {
+          /*
+           * Recursively clears any downstream match that
+           * was populated by a now-stale winner, undoing
+           * their result too if they'd already been played,
+           * and walking further forward from there. Stops
+           * as soon as a slot no longer holds the stale
+           * participant (nothing downstream to unwind) or
+           * there's no next round (we corrected the final).
+           */
+          async function clearDownstream(
+            fromRoundNumber: number,
+            fromPosition: number,
+            staleParticipantId: number
+          ): Promise<void> {
+            const nextRound =
+              await tx.round.findFirst({
+                where: {
+                  tournamentId,
+                  roundNumber:
+                    fromRoundNumber + 1,
+                },
+              });
+
+            if (!nextRound) {
+              return;
+            }
+
+            const nextPosition = Math.ceil(
+              fromPosition / 2
+            );
+
+            const nextMatch =
+              await tx.match.findFirst({
+                where: {
+                  roundId: nextRound.id,
+                  position: nextPosition,
+                },
+              });
+
+            if (!nextMatch) {
+              return;
+            }
+
+            const staleWasPlayer1 =
+              fromPosition % 2 === 1;
+
+            const currentSlotValue =
+              staleWasPlayer1
+                ? nextMatch.player1Id
+                : nextMatch.player2Id;
+
+            if (
+              currentSlotValue !==
+              staleParticipantId
+            ) {
+              // Downstream state no longer matches what
+              // we expect — nothing to unwind here.
+              return;
+            }
+
+            const nextMatchOldWinnerId =
+              nextMatch.winnerId;
+
+            await tx.match.update({
+              where: {
+                id: nextMatch.id,
+              },
+              data: staleWasPlayer1
+                ? {
+                    player1Id: null,
+                    winnerId: null,
+                    status: "WAITING",
+                    player1Score: null,
+                    player2Score: null,
+                    player1PenaltyScore: null,
+                    player2PenaltyScore: null,
+                    resultType: null,
+                    completedAt: null,
+                  }
+                : {
+                    player2Id: null,
+                    winnerId: null,
+                    status: "WAITING",
+                    player1Score: null,
+                    player2Score: null,
+                    player1PenaltyScore: null,
+                    player2PenaltyScore: null,
+                    resultType: null,
+                    completedAt: null,
+                  },
+            });
+
+            if (nextMatchOldWinnerId) {
+              await clearDownstream(
+                nextRound.roundNumber,
+                nextPosition,
+                nextMatchOldWinnerId
+              );
+            }
+
+            const roundAfterNext =
+              await tx.round.findFirst({
+                where: {
+                  tournamentId,
+                  roundNumber:
+                    nextRound.roundNumber + 1,
+                },
+              });
+
+            const nextMatchWasFinal =
+              !roundAfterNext;
+
+            if (
+              nextMatchWasFinal &&
+              nextMatchOldWinnerId
+            ) {
+              await tx.tournament.update({
+                where: {
+                  id: tournamentId,
+                },
+                data: {
+                  status: "IN_PROGRESS",
+                  championId: null,
+                },
+              });
+            }
+          }
+
+          if (
+            isCorrection &&
+            previousWinnerId !== null &&
+            previousWinnerId !== finalWinnerId
+          ) {
+            await clearDownstream(
+              match.round.roundNumber,
+              match.position,
+              previousWinnerId
+            );
+          }
+
           const completedMatch =
             await tx.match.update({
               where: {
@@ -408,6 +564,15 @@ export async function PATCH(
                 result: true,
               },
             });
+
+          await tx.tournamentHistory.create({
+            data: {
+              tournamentId,
+              action: isCorrection
+                ? `Result corrected for ${match.round.name}, Match ${match.position}. Winner: ${completedMatch.winner?.name ?? "draw / no winner"}.`
+                : `${match.round.name}, Match ${match.position} completed. Winner: ${completedMatch.winner?.name ?? "Draw"}.`,
+            },
+          });
 
           // ------------------------------------------------
           // Create/update MatchResult
@@ -509,7 +674,10 @@ export async function PATCH(
           }
 
           // ------------------------------------------------
-          // 12. If this was the final, complete tournament
+          // 12. If this was the final AND it produced a
+          //     winner, complete the tournament and persist
+          //     the champion. A drawn final has no winner,
+          //     so the tournament cannot complete from it.
           // ------------------------------------------------
 
           const nextRound =
@@ -522,14 +690,26 @@ export async function PATCH(
             });
 
           if (!nextRound) {
-            await tx.tournament.update({
-              where: {
-                id: tournamentId,
-              },
-              data: {
-                status: "COMPLETED",
-              },
-            });
+            if (finalWinnerId !== null) {
+              await tx.tournament.update({
+                where: {
+                  id: tournamentId,
+                },
+                data: {
+                  status: "COMPLETED",
+                  championId: finalWinnerId,
+                },
+              });
+
+              await tx.tournamentHistory.create(
+                {
+                  data: {
+                    tournamentId,
+                    action: `Tournament completed. Champion: ${completedMatch.winner?.name ?? "participant #" + finalWinnerId}.`,
+                  },
+                }
+              );
+            }
           } else {
             // Tournament has started once a result is recorded.
             await tx.tournament.update({

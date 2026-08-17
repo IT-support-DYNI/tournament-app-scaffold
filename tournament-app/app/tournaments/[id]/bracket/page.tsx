@@ -31,6 +31,7 @@ export default async function BracketPage({
         id: tournamentId,
       },
       include: {
+        champion: true,
         rounds: {
           orderBy: {
             roundNumber: "asc",
@@ -83,6 +84,21 @@ export default async function BracketPage({
             Tournament Bracket
           </p>
         </div>
+
+        {/* Champion */}
+
+        {tournament.status === "COMPLETED" &&
+          tournament.champion && (
+            <div className="mb-8 rounded-lg bg-yellow-50 border border-yellow-300 p-6 text-center shadow">
+              <p className="text-sm font-medium uppercase tracking-wide text-yellow-700">
+                🏆 Champion
+              </p>
+
+              <p className="mt-2 text-3xl font-bold text-yellow-900">
+                {tournament.champion.name}
+              </p>
+            </div>
+          )}
 
         {/* No bracket */}
 

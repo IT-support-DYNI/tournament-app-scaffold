@@ -127,6 +127,13 @@ export async function PATCH(
           },
         });
 
+      await prisma.tournamentHistory.create({
+        data: {
+          tournamentId,
+          action: `Registration rejected for ${registration.name}.`,
+        },
+      });
+
       return NextResponse.json({
         message:
           "Registration rejected successfully.",
@@ -186,6 +193,13 @@ export async function PATCH(
               status: "ACTIVE",
             },
           });
+
+        await tx.tournamentHistory.create({
+          data: {
+            tournamentId,
+            action: `Registration approved for ${registration.name}.`,
+          },
+        });
 
         return {
           updatedRegistration,

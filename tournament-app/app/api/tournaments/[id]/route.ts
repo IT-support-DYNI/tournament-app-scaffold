@@ -10,6 +10,46 @@ type RouteContext = {
   }>;
 };
 
+/*
+ * Manual status changes are limited to the registration
+ * window. IN_PROGRESS/COMPLETED are set automatically by
+ * bracket generation and match completion, never by this
+ * route.
+ */
+const MANUALLY_SETTABLE_STATUSES = [
+  "DRAFT",
+  "REGISTRATION_OPEN",
+  "REGISTRATION_CLOSED",
+] as const;
+
+const ALLOWED_STATUS_TRANSITIONS: Record<string, string[]> = {
+  DRAFT: ["REGISTRATION_OPEN"],
+  REGISTRATION_OPEN: ["REGISTRATION_CLOSED"],
+  REGISTRATION_CLOSED: ["REGISTRATION_OPEN"],
+};
+
+/*
+ * This route has no auth requirement (the public bracket
+ * and tournament pages depend on that), so contact details
+ * must never leave the server for anyone but the organizer.
+ */
+function scrubContactDetails<
+  T extends {
+    email: string | null;
+    phone: string | null;
+  } | null
+>(participant: T): T {
+  if (!participant) {
+    return participant;
+  }
+
+  return {
+    ...participant,
+    email: null,
+    phone: null,
+  };
+}
+
 // GET /api/tournaments/[id]
 export async function GET(
   request: Request,
@@ -25,6 +65,10 @@ export async function GET(
         { status: 400 }
       );
     }
+
+    const session = await getServerSession(
+      authOptions
+    );
 
     const tournament =
       await prisma.tournament.findUnique({
@@ -43,6 +87,8 @@ export async function GET(
           participants: true,
 
           registrations: true,
+
+          champion: true,
 
           rounds: {
             orderBy: {
@@ -91,7 +137,53 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(tournament);
+    const isOwner =
+      Boolean(session?.user?.id) &&
+      Number(session?.user?.id) ===
+        tournament.organizerId;
+
+    /*
+     * Only the organizer gets contact details.
+     * Anonymous/public callers (the public bracket
+     * and tournament pages) never see registrant
+     * email/phone, and pending/rejected
+     * registrations aren't public at all.
+     */
+    const sanitizedTournament = {
+      ...tournament,
+      registrations: isOwner
+        ? tournament.registrations
+        : [],
+      participants: tournament.participants.map(
+        (participant) =>
+          isOwner
+            ? participant
+            : scrubContactDetails(participant)
+      ),
+      champion: isOwner
+        ? tournament.champion
+        : scrubContactDetails(tournament.champion),
+      matches: tournament.matches.map((match) =>
+        isOwner
+          ? match
+          : {
+              ...match,
+              player1: scrubContactDetails(
+                match.player1
+              ),
+              player2: scrubContactDetails(
+                match.player2
+              ),
+              winner: scrubContactDetails(
+                match.winner
+              ),
+            }
+      ),
+    };
+
+    return NextResponse.json(
+      sanitizedTournament
+    );
   } catch (error) {
     console.error(
       "GET /api/tournaments/[id] error:",
@@ -183,6 +275,7 @@ export async function PATCH(
       maxParticipants,
       needsContact,
       drawRule,
+      status,
     } = body;
 
     const data: {
@@ -194,6 +287,7 @@ export async function PATCH(
       maxParticipants?: number;
       needsContact?: boolean;
       drawRule?: typeof tournament.drawRule;
+      status?: typeof tournament.status;
     } = {};
 
     // NAME
@@ -344,6 +438,39 @@ export async function PATCH(
     // DRAW RULE
     if (drawRule !== undefined) {
       data.drawRule = drawRule;
+    }
+
+    // STATUS (registration lifecycle only)
+    if (status !== undefined) {
+      if (
+        !MANUALLY_SETTABLE_STATUSES.includes(status)
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Status can only be set to DRAFT, REGISTRATION_OPEN, or REGISTRATION_CLOSED here. Other statuses are set automatically by the tournament.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const allowedNextStatuses =
+        ALLOWED_STATUS_TRANSITIONS[
+          tournament.status
+        ] ?? [];
+
+      if (
+        !allowedNextStatuses.includes(status)
+      ) {
+        return NextResponse.json(
+          {
+            error: `Cannot change status from ${tournament.status} to ${status}.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      data.status = status;
     }
 
     const updatedTournament =

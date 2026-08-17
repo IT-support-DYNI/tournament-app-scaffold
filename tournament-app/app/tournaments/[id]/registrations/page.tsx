@@ -20,6 +20,7 @@ type Registration = {
   createdAt: string;
   participant: {
     id: number;
+    status: "ACTIVE" | "INACTIVE" | "ELIMINATED" | "BANNED";
   } | null;
 };
 
@@ -147,6 +148,61 @@ export default function TournamentRegistrationsPage() {
         err instanceof Error
           ? err.message
           : `Failed to ${action} registration.`
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function withdrawParticipant(
+    participantId: number,
+    playerName: string
+  ) {
+    const confirmed = window.confirm(
+      `Withdraw ${playerName} from the tournament? If they currently have an assigned opponent, that opponent will immediately advance by walkover.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setUpdatingId(participantId);
+      setError("");
+
+      const response = await fetch(
+        `/api/tournaments/${tournamentId}/participants/${participantId}/withdraw`,
+        {
+          method: "POST",
+        }
+      );
+
+      const contentType =
+        response.headers.get("content-type");
+
+      if (!contentType?.includes("application/json")) {
+        throw new Error(
+          `Server returned an unexpected response (${response.status}).`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Failed to withdraw participant."
+        );
+      }
+
+      await loadRegistrations();
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to withdraw participant."
       );
     } finally {
       setUpdatingId(null);
@@ -424,11 +480,39 @@ export default function TournamentRegistrationsPage() {
                           )}
 
                           {registration.status ===
-                            "APPROVED" && (
-                            <span className="text-sm text-gray-500">
-                              Participant created
-                            </span>
-                          )}
+                            "APPROVED" &&
+                            registration.participant &&
+                            registration.participant
+                              .status === "ACTIVE" && (
+                              <button
+                                type="button"
+                                disabled={
+                                  updatingId ===
+                                  registration.participant
+                                    .id
+                                }
+                                onClick={() =>
+                                  withdrawParticipant(
+                                    registration
+                                      .participant!.id,
+                                    registration.name
+                                  )
+                                }
+                                className="rounded-md bg-orange-600 px-3 py-2 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+                              >
+                                Withdraw
+                              </button>
+                            )}
+
+                          {registration.status ===
+                            "APPROVED" &&
+                            registration.participant &&
+                            registration.participant
+                              .status !== "ACTIVE" && (
+                              <span className="text-sm text-gray-500">
+                                Withdrawn
+                              </span>
+                            )}
 
                           {registration.status ===
                             "REJECTED" && (

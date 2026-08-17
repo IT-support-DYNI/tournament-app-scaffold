@@ -88,6 +88,8 @@ model Tournament {
   maxParticipants   Int
   needsContact      Boolean             @default(false)
   drawRule          DrawRule            @default(DRAW_NOT_ALLOWED)
+  championId        Int?
+  champion          Participant?        @relation("TournamentChampion", fields: [championId], references: [id])
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   participants      Participant[]
@@ -131,6 +133,7 @@ model Participant {
   player1Matches Match[]           @relation("Player1")
   player2Matches Match[]           @relation("Player2")
   matchesWon     Match[]           @relation("Winner")
+  championOf     Tournament[]      @relation("TournamentChampion")
 
   @@index([tournamentId])
 }

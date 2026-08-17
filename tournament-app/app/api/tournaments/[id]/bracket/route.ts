@@ -10,6 +10,10 @@ type RouteContext = {
   }>;
 };
 
+type ParticipantRow = {
+  id: number;
+};
+
 function nextPowerOfTwo(value: number) {
   let power = 1;
 
@@ -90,12 +94,6 @@ export async function POST(
     // Only the organizer can generate
     // the bracket.
 
-    console.log("DEBUG SESSION USER ID:", session?.user?.id);
-    console.log(
-      "DEBUG TOURNAMENT ORGANIZER ID:",
-      tournament.organizerId
-    );
-
     if (
       tournament.organizerId !==
       Number(session.user.id)
@@ -153,25 +151,52 @@ export async function POST(
     const shuffledParticipants =
       shuffle(participants);
 
+    const matchesInRound1 = bracketSize / 2;
+
     /*
-     * Create the bracket slots.
-     *
-     * Example:
-     *
-     * 6 players
-     * ↓
-     * 8 slots
-     *
-     * 8 players
-     * ↓
-     * 8 slots
+     * byeCount is always strictly less than
+     * matchesInRound1 (a consequence of
+     * bracketSize being the *smallest* power of
+     * two >= participants.length), so we can
+     * always give each bye its own match instead
+     * of letting two byes land in the same match.
      */
-    const slots = [
-      ...shuffledParticipants,
-      ...Array(
-        bracketSize - shuffledParticipants.length
-      ).fill(null),
-    ];
+    const byeCount =
+      bracketSize - shuffledParticipants.length;
+
+    const matchPairs: {
+      player1: ParticipantRow | null;
+      player2: ParticipantRow | null;
+    }[] = [];
+
+    let participantCursor = 0;
+
+    for (
+      let matchIndex = 0;
+      matchIndex < matchesInRound1;
+      matchIndex++
+    ) {
+      if (matchIndex < byeCount) {
+        matchPairs.push({
+          player1:
+            shuffledParticipants[
+              participantCursor++
+            ] ?? null,
+          player2: null,
+        });
+      } else {
+        matchPairs.push({
+          player1:
+            shuffledParticipants[
+              participantCursor++
+            ] ?? null,
+          player2:
+            shuffledParticipants[
+              participantCursor++
+            ] ?? null,
+        });
+      }
+    }
 
     const result =
       await prisma.$transaction(async (tx) => {
@@ -206,6 +231,20 @@ export async function POST(
           });
         }
 
+        const roundByNumber = new Map(
+          rounds.map((entry) => [
+            entry.round.roundNumber,
+            entry.round,
+          ])
+        );
+
+        const roundById = new Map(
+          rounds.map((entry) => [
+            entry.round.id,
+            entry.round,
+          ])
+        );
+
         /*
          * Create matches.
          */
@@ -235,43 +274,28 @@ export async function POST(
               "WAITING";
 
             /*
-             * Round 1 gets actual participants.
+             * Round 1 gets actual participants,
+             * paired so that at most one bye
+             * lands in any single match.
              */
             if (round.roundNumber === 1) {
-              const slot1 =
-                slots[(position - 1) * 2];
-
-              const slot2 =
-                slots[(position - 1) * 2 + 1];
+              const pair =
+                matchPairs[position - 1];
 
               player1Id =
-                slot1?.id ?? null;
+                pair?.player1?.id ?? null;
 
               player2Id =
-                slot2?.id ?? null;
+                pair?.player2?.id ?? null;
 
-              /*
-               * Both players exist.
-               */
               if (player1Id && player2Id) {
                 status = "READY";
-              }
-
-              /*
-               * Only one player exists.
-               * This is a BYE.
-               */
-              else if (
+              } else if (
                 player1Id ||
                 player2Id
               ) {
                 status = "BYE";
-              }
-
-              /*
-               * Neither player exists.
-               */
-              else {
+              } else {
                 status = "WAITING";
               }
             }
@@ -294,7 +318,9 @@ export async function POST(
 
         /*
          * For BYE matches, the only player
-         * automatically becomes the winner.
+         * automatically becomes the winner and
+         * advances into the next round, exactly
+         * like a normal match result would.
          */
         for (const match of createdMatches) {
           if (match.status !== "BYE") {
@@ -317,6 +343,73 @@ export async function POST(
               winnerId,
             },
           });
+
+          const currentRound = roundById.get(
+            match.roundId
+          );
+
+          const nextRound = currentRound
+            ? roundByNumber.get(
+                currentRound.roundNumber + 1
+              )
+            : undefined;
+
+          if (!nextRound) {
+            continue;
+          }
+
+          const nextPosition = Math.ceil(
+            match.position / 2
+          );
+
+          const nextMatch =
+            createdMatches.find(
+              (candidate) =>
+                candidate.roundId ===
+                  nextRound.id &&
+                candidate.position ===
+                  nextPosition
+            );
+
+          if (!nextMatch) {
+            continue;
+          }
+
+          const winnerGoesIntoPlayer1 =
+            match.position % 2 === 1;
+
+          const advanceData =
+            winnerGoesIntoPlayer1
+              ? {
+                  player1Id: winnerId,
+                  status: nextMatch.player2Id
+                    ? ("READY" as const)
+                    : ("WAITING" as const),
+                }
+              : {
+                  player2Id: winnerId,
+                  status: nextMatch.player1Id
+                    ? ("READY" as const)
+                    : ("WAITING" as const),
+                };
+
+          await tx.match.update({
+            where: {
+              id: nextMatch.id,
+            },
+            data: advanceData,
+          });
+
+          /*
+           * Keep the in-memory copy in sync so
+           * a second bye feeding the same next
+           * match (both slots filled by byes)
+           * is detected correctly above.
+           */
+          Object.assign(
+            nextMatch,
+            advanceData
+          );
         }
 
         /*
