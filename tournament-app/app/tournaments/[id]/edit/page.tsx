@@ -235,7 +235,7 @@ export default function EditTournamentPage() {
 
               <input
                 id="startDate"
-                type="date"
+                type="datetime-local"
                 value={startDate}
                 onChange={(event) =>
                   setStartDate(event.target.value)
@@ -257,7 +257,7 @@ export default function EditTournamentPage() {
 
               <input
                 id="endDate"
-                type="date"
+                type="datetime-local"
                 value={endDate}
                 onChange={(event) =>
                   setEndDate(event.target.value)
@@ -282,7 +282,7 @@ export default function EditTournamentPage() {
 
               <input
                 id="registrationOpen"
-                type="date"
+                type="datetime-local"
                 value={registrationOpen}
                 onChange={(event) =>
                   setRegistrationOpen(event.target.value)
@@ -304,7 +304,7 @@ export default function EditTournamentPage() {
 
               <input
                 id="registrationClose"
-                type="date"
+                type="datetime-local"
                 value={registrationClose}
                 onChange={(event) =>
                   setRegistrationClose(event.target.value)

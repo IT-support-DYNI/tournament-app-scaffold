@@ -1,6 +1,3 @@
-"use client";
-import { useState } from "react";
-
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -13,13 +10,13 @@ type RouteContext = {
   }>;
 };
 
+// GET /api/tournaments/[id]
 export async function GET(
   request: Request,
   context: RouteContext
 ) {
   try {
     const { id } = await context.params;
-
     const tournamentId = Number(id);
 
     if (!Number.isInteger(tournamentId)) {
@@ -29,32 +26,63 @@ export async function GET(
       );
     }
 
-    const tournament = await prisma.tournament.findUnique({
-      where: {
-        id: tournamentId,
-      },
-      include: {
-        organizer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const tournament =
+      await prisma.tournament.findUnique({
+        where: {
+          id: tournamentId,
+        },
+        include: {
+          organizer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+
+          participants: true,
+
+          registrations: true,
+
+          rounds: {
+            orderBy: {
+              roundNumber: "asc",
+            },
+          },
+
+          matches: {
+            orderBy: [
+              {
+                roundId: "asc",
+              },
+              {
+                position: "asc",
+              },
+            ],
+            include: {
+              round: true,
+              player1: true,
+              player2: true,
+              winner: true,
+              result: true,
+            },
+          },
+
+          history: {
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+
+          _count: {
+            select: {
+              participants: true,
+              registrations: true,
+              matches: true,
+            },
           },
         },
-        participants: true,
-        registrations: true,
-        rounds: true,
-        matches: true,
-        history: true,
-        _count: {
-          select: {
-            participants: true,
-            registrations: true,
-            matches: true,
-          },
-        },
-      },
-    });
+      });
 
     if (!tournament) {
       return NextResponse.json(
@@ -65,25 +93,39 @@ export async function GET(
 
     return NextResponse.json(tournament);
   } catch (error) {
-    console.error("GET /api/tournaments/[id] error:", error);
+    console.error(
+      "GET /api/tournaments/[id] error:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "Failed to fetch tournament." },
+      {
+        error: "Failed to fetch tournament.",
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
+// PATCH /api/tournaments/[id]
 export async function PATCH(
   request: Request,
   context: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(
+      authOptions
+    );
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "You must be logged in." },
+        {
+          error: "You must be logged in.",
+        },
         { status: 401 }
       );
     }
@@ -93,26 +135,34 @@ export async function PATCH(
 
     if (!Number.isInteger(tournamentId)) {
       return NextResponse.json(
-        { error: "Invalid tournament ID." },
+        {
+          error: "Invalid tournament ID.",
+        },
         { status: 400 }
       );
     }
 
-    const tournament = await prisma.tournament.findUnique({
-      where: {
-        id: tournamentId,
-      },
-    });
+    const tournament =
+      await prisma.tournament.findUnique({
+        where: {
+          id: tournamentId,
+        },
+      });
 
     if (!tournament) {
       return NextResponse.json(
-        { error: "Tournament not found." },
+        {
+          error: "Tournament not found.",
+        },
         { status: 404 }
       );
     }
 
     // Only the organizer can edit the tournament.
-    if (tournament.organizerId !== Number(session.user.id)) {
+    if (
+      tournament.organizerId !==
+      Number(session.user.id)
+    ) {
       return NextResponse.json(
         {
           error:
@@ -146,10 +196,17 @@ export async function PATCH(
       drawRule?: typeof tournament.drawRule;
     } = {};
 
+    // NAME
     if (name !== undefined) {
-      if (typeof name !== "string" || !name.trim()) {
+      if (
+        typeof name !== "string" ||
+        !name.trim()
+      ) {
         return NextResponse.json(
-          { error: "Tournament name cannot be empty." },
+          {
+            error:
+              "Tournament name cannot be empty.",
+          },
           { status: 400 }
         );
       }
@@ -157,12 +214,15 @@ export async function PATCH(
       data.name = name.trim();
     }
 
+    // START DATE
     if (startDate !== undefined) {
       const parsed = new Date(startDate);
 
       if (Number.isNaN(parsed.getTime())) {
         return NextResponse.json(
-          { error: "Invalid start date." },
+          {
+            error: "Invalid start date.",
+          },
           { status: 400 }
         );
       }
@@ -170,15 +230,23 @@ export async function PATCH(
       data.startDate = parsed;
     }
 
+    // END DATE
     if (endDate !== undefined) {
-      if (endDate === null || endDate === "") {
+      if (
+        endDate === null ||
+        endDate === ""
+      ) {
         data.endDate = null;
       } else {
         const parsed = new Date(endDate);
 
-        if (Number.isNaN(parsed.getTime())) {
+        if (
+          Number.isNaN(parsed.getTime())
+        ) {
           return NextResponse.json(
-            { error: "Invalid end date." },
+            {
+              error: "Invalid end date.",
+            },
             { status: 400 }
           );
         }
@@ -187,12 +255,20 @@ export async function PATCH(
       }
     }
 
+    // REGISTRATION OPEN
     if (registrationOpen !== undefined) {
-      const parsed = new Date(registrationOpen);
+      const parsed = new Date(
+        registrationOpen
+      );
 
-      if (Number.isNaN(parsed.getTime())) {
+      if (
+        Number.isNaN(parsed.getTime())
+      ) {
         return NextResponse.json(
-          { error: "Invalid registration open date." },
+          {
+            error:
+              "Invalid registration open date.",
+          },
           { status: 400 }
         );
       }
@@ -200,6 +276,7 @@ export async function PATCH(
       data.registrationOpen = parsed;
     }
 
+    // REGISTRATION CLOSE
     if (registrationClose !== undefined) {
       if (
         registrationClose === null ||
@@ -207,11 +284,18 @@ export async function PATCH(
       ) {
         data.registrationClose = null;
       } else {
-        const parsed = new Date(registrationClose);
+        const parsed = new Date(
+          registrationClose
+        );
 
-        if (Number.isNaN(parsed.getTime())) {
+        if (
+          Number.isNaN(parsed.getTime())
+        ) {
           return NextResponse.json(
-            { error: "Invalid registration close date." },
+            {
+              error:
+                "Invalid registration close date.",
+            },
             { status: 400 }
           );
         }
@@ -220,10 +304,16 @@ export async function PATCH(
       }
     }
 
+    // MAX PARTICIPANTS
     if (maxParticipants !== undefined) {
-      const parsed = Number(maxParticipants);
+      const parsed = Number(
+        maxParticipants
+      );
 
-      if (!Number.isInteger(parsed) || parsed < 2) {
+      if (
+        !Number.isInteger(parsed) ||
+        parsed < 2
+      ) {
         return NextResponse.json(
           {
             error:
@@ -236,10 +326,22 @@ export async function PATCH(
       data.maxParticipants = parsed;
     }
 
+    // CONTACT REQUIREMENT
     if (needsContact !== undefined) {
-      data.needsContact = Boolean(needsContact);
+      if (typeof needsContact !== "boolean") {
+        return NextResponse.json(
+          {
+            error:
+              "needsContact must be true or false.",
+          },
+          { status: 400 }
+        );
+      }
+
+      data.needsContact = needsContact;
     }
 
+    // DRAW RULE
     if (drawRule !== undefined) {
       data.drawRule = drawRule;
     }
@@ -261,7 +363,9 @@ export async function PATCH(
         },
       });
 
-    return NextResponse.json(updatedTournament);
+    return NextResponse.json(
+      updatedTournament
+    );
   } catch (error) {
     console.error(
       "PATCH /api/tournaments/[id] error:",
@@ -269,22 +373,34 @@ export async function PATCH(
     );
 
     return NextResponse.json(
-      { error: "Failed to update tournament." },
+      {
+        error:
+          "Failed to update tournament.",
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
+// DELETE /api/tournaments/[id]
 export async function DELETE(
   request: Request,
   context: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(
+      authOptions
+    );
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "You must be logged in." },
+        {
+          error: "You must be logged in.",
+        },
         { status: 401 }
       );
     }
@@ -294,26 +410,34 @@ export async function DELETE(
 
     if (!Number.isInteger(tournamentId)) {
       return NextResponse.json(
-        { error: "Invalid tournament ID." },
+        {
+          error: "Invalid tournament ID.",
+        },
         { status: 400 }
       );
     }
 
-    const tournament = await prisma.tournament.findUnique({
-      where: {
-        id: tournamentId,
-      },
-    });
+    const tournament =
+      await prisma.tournament.findUnique({
+        where: {
+          id: tournamentId,
+        },
+      });
 
     if (!tournament) {
       return NextResponse.json(
-        { error: "Tournament not found." },
+        {
+          error: "Tournament not found.",
+        },
         { status: 404 }
       );
     }
 
     // Only the organizer can delete the tournament.
-    if (tournament.organizerId !== Number(session.user.id)) {
+    if (
+      tournament.organizerId !==
+      Number(session.user.id)
+    ) {
       return NextResponse.json(
         {
           error:
@@ -339,7 +463,14 @@ export async function DELETE(
     );
 
     return NextResponse.json(
-      { error: "Failed to delete tournament." },
+      {
+        error:
+          "Failed to delete tournament.",
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
       { status: 500 }
     );
   }

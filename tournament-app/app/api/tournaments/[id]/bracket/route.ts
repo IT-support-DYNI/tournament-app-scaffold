@@ -90,6 +90,12 @@ export async function POST(
     // Only the organizer can generate
     // the bracket.
 
+    console.log("DEBUG SESSION USER ID:", session?.user?.id);
+    console.log(
+      "DEBUG TOURNAMENT ORGANIZER ID:",
+      tournament.organizerId
+    );
+
     if (
       tournament.organizerId !==
       Number(session.user.id)
