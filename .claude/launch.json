@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tournament-app-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "tournament-app", "run", "dev"],
+      "port": 3000
+    }
+  ]
+}
