@@ -6,3 +6,4 @@ out/
 npm-debug.log*
 *.log
 .DS_Store
+*.tsbuildinfo
