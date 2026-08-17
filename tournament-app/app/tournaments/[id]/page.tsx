@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
+import { canManageTournament } from "@/lib/authorization";
 import DeleteTournamentButton from "./DeleteTournamentButton";
 import GenerateBracketButton from "./GenerateBracketButton";
 import TournamentStatusControls from "./TournamentStatusControls";
@@ -39,7 +40,11 @@ export default async function TournamentPage({
 
   const isOwner =
     Boolean(session?.user?.id) &&
-    Number(session?.user?.id) === tournament.organizerId;
+    canManageTournament(
+      session!.user.role,
+      Number(session!.user.id),
+      tournament.organizerId
+    );
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">

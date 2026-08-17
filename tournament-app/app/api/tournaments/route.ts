@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canCreateTournaments } from "@/lib/authorization";
 
 function createSlug(name: string) {
   return (
@@ -24,6 +25,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "You must be logged in." },
         { status: 401 }
+      );
+    }
+
+    if (!canCreateTournaments(session.user.role)) {
+      return NextResponse.json(
+        {
+          error:
+            "Only staff or admin accounts can create tournaments.",
+        },
+        { status: 403 }
       );
     }
 

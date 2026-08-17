@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageTournament } from "@/lib/authorization";
+import { notifyUser } from "@/lib/notify";
 
 type RouteContext = {
   params: Promise<{
@@ -12,6 +14,8 @@ type RouteContext = {
 
 type ParticipantRow = {
   id: number;
+  name: string;
+  userId: number | null;
 };
 
 function nextPowerOfTwo(value: number) {
@@ -91,12 +95,15 @@ export async function POST(
       );
     }
 
-    // Only the organizer can generate
+    // Only the organizer or an admin can generate
     // the bracket.
 
     if (
-      tournament.organizerId !==
-      Number(session.user.id)
+      !canManageTournament(
+        session.user.role,
+        Number(session.user.id),
+        tournament.organizerId
+      )
     ) {
       return NextResponse.json(
         {
@@ -313,6 +320,26 @@ export async function POST(
               });
 
             createdMatches.push(match);
+
+            if (
+              round.roundNumber === 1 &&
+              status === "READY"
+            ) {
+              const pair =
+                matchPairs[position - 1];
+
+              await notifyUser(
+                tx,
+                pair?.player1?.userId,
+                `Your first match in "${tournament.name}" is ready — you're facing ${pair?.player2?.name}.`
+              );
+
+              await notifyUser(
+                tx,
+                pair?.player2?.userId,
+                `Your first match in "${tournament.name}" is ready — you're facing ${pair?.player1?.name}.`
+              );
+            }
           }
         }
 

@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -138,6 +141,17 @@ export async function POST(
       );
     }
 
+    /*
+     * Registration stays anonymous by default — no login
+     * required. If the visitor happens to be logged in when
+     * they register, we link their account so they can
+     * receive progress notifications later. Purely optional.
+     */
+    const session = await getServerSession(authOptions);
+    const linkedUserId = session?.user?.id
+      ? Number(session.user.id)
+      : null;
+
     const registration =
       await prisma.registration.create({
         data: {
@@ -157,6 +171,7 @@ export async function POST(
               ? phone.trim()
               : null,
           status: "PENDING",
+          userId: linkedUserId,
         },
       });
 

@@ -3,9 +3,15 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canCreateTournaments } from "@/lib/authorization";
 
 export default async function TournamentsPage() {
   const session = await getServerSession(authOptions);
+
+  const canCreate = Boolean(
+    session?.user?.role &&
+      canCreateTournaments(session.user.role)
+  );
 
   const tournaments = await prisma.tournament.findMany({
     orderBy: {
@@ -41,7 +47,7 @@ export default async function TournamentsPage() {
             </p>
           </div>
 
-          {session && (
+          {canCreate && (
             <Link
               href="/tournaments/new"
               className="rounded-md bg-black px-5 py-2 text-sm font-medium text-white hover:bg-gray-800"
@@ -61,7 +67,7 @@ export default async function TournamentsPage() {
               Create your first tournament to get started.
             </p>
 
-            {session && (
+            {canCreate && (
               <Link
                 href="/tournaments/new"
                 className="mt-6 inline-block rounded-md bg-black px-5 py-2 text-sm font-medium text-white hover:bg-gray-800"

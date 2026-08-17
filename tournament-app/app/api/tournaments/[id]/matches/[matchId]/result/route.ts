@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageTournament } from "@/lib/authorization";
+import { notifyUser } from "@/lib/notify";
 
 type RouteContext = {
   params: Promise<{
@@ -64,7 +66,6 @@ export async function PATCH(
         player1: true,
         player2: true,
         winner: true,
-        result: true,
       },
     });
 
@@ -78,10 +79,16 @@ export async function PATCH(
     }
 
     // --------------------------------------------------
-    // 3. Only tournament organizer can submit results
+    // 3. Only the organizer or an admin can submit results
     // --------------------------------------------------
 
-    if (match.tournament.organizerId !== userId) {
+    if (
+      !canManageTournament(
+        session.user.role,
+        userId,
+        match.tournament.organizerId
+      )
+    ) {
       return NextResponse.json(
         {
           error:
@@ -114,6 +121,14 @@ export async function PATCH(
       );
     }
 
+    /*
+     * Captured as plain consts (rather than repeatedly
+     * accessing match.player1/player2) so their non-null
+     * type survives into the transaction closure below.
+     */
+    const matchPlayer1 = match.player1;
+    const matchPlayer2 = match.player2;
+
     // --------------------------------------------------
     // 6. Read request body
     // --------------------------------------------------
@@ -127,7 +142,6 @@ export async function PATCH(
       player2PenaltyScore,
       resultType,
       winnerId,
-      notes,
       confirmCorrection,
     } = body;
 
@@ -578,7 +592,6 @@ export async function PATCH(
                 player1: true,
                 player2: true,
                 winner: true,
-                result: true,
               },
             });
 
@@ -593,34 +606,36 @@ export async function PATCH(
             },
           });
 
-          // ------------------------------------------------
-          // Create/update MatchResult
-          // ------------------------------------------------
+          if (isDraw) {
+            await notifyUser(
+              tx,
+              matchPlayer1.userId,
+              `Your match in "${match.tournament.name}" (${match.round.name}, Match ${match.position}) ended in a draw. A replay is needed.`
+            );
 
-          if (match.result) {
-            await tx.matchResult.update({
-              where: {
-                matchId: match.id,
-              },
-              data: {
-                notes:
-                  typeof notes === "string" &&
-                  notes.trim()
-                    ? notes.trim()
-                    : null,
-              },
-            });
+            await notifyUser(
+              tx,
+              matchPlayer2.userId,
+              `Your match in "${match.tournament.name}" (${match.round.name}, Match ${match.position}) ended in a draw. A replay is needed.`
+            );
           } else {
-            await tx.matchResult.create({
-              data: {
-                matchId: match.id,
-                notes:
-                  typeof notes === "string" &&
-                  notes.trim()
-                    ? notes.trim()
-                    : null,
-              },
-            });
+            const loser =
+              completedMatch.winnerId ===
+              matchPlayer1.id
+                ? matchPlayer2
+                : matchPlayer1;
+
+            await notifyUser(
+              tx,
+              completedMatch.winner?.userId,
+              `You won your match in "${match.tournament.name}" (${match.round.name}, Match ${match.position})!`
+            );
+
+            await notifyUser(
+              tx,
+              loser.userId,
+              `You lost your match in "${match.tournament.name}" (${match.round.name}, Match ${match.position}).`
+            );
           }
 
           // ------------------------------------------------
@@ -659,11 +674,21 @@ export async function PATCH(
                     roundId: nextRound.id,
                     position: nextPosition,
                   },
+                  include: {
+                    player1: true,
+                    player2: true,
+                  },
                 });
 
               if (nextMatch) {
                 const winnerGoesIntoPlayer1 =
                   match.position % 2 === 1;
+
+                const becomesReady = Boolean(
+                  winnerGoesIntoPlayer1
+                    ? nextMatch.player2Id
+                    : nextMatch.player1Id
+                );
 
                 await tx.match.update({
                   where: {
@@ -674,20 +699,42 @@ export async function PATCH(
                       ? {
                           player1Id:
                             finalWinnerId,
-                          status:
-                            nextMatch.player2Id
-                              ? "READY"
-                              : "WAITING",
+                          status: becomesReady
+                            ? "READY"
+                            : "WAITING",
                         }
                       : {
                           player2Id:
                             finalWinnerId,
-                          status:
-                            nextMatch.player1Id
-                              ? "READY"
-                              : "WAITING",
+                          status: becomesReady
+                            ? "READY"
+                            : "WAITING",
                         },
                 });
+
+                if (becomesReady) {
+                  const advancingName =
+                    completedMatch.winner
+                      ?.name ?? "your opponent";
+
+                  const alreadyThereParticipant =
+                    winnerGoesIntoPlayer1
+                      ? nextMatch.player2
+                      : nextMatch.player1;
+
+                  await notifyUser(
+                    tx,
+                    completedMatch.winner
+                      ?.userId,
+                    `Your next match in "${match.tournament.name}" (${nextRound.name}, Match ${nextPosition}) is ready — you're facing ${alreadyThereParticipant?.name ?? "TBD"}.`
+                  );
+
+                  await notifyUser(
+                    tx,
+                    alreadyThereParticipant?.userId,
+                    `Your next match in "${match.tournament.name}" (${nextRound.name}, Match ${nextPosition}) is ready — you're facing ${advancingName}.`
+                  );
+                }
               }
             }
           }
@@ -727,6 +774,12 @@ export async function PATCH(
                     action: `Tournament completed. Champion: ${completedMatch.winner?.name ?? "participant #" + finalWinnerId}.`,
                   },
                 }
+              );
+
+              await notifyUser(
+                tx,
+                completedMatch.winner?.userId,
+                `You won "${match.tournament.name}"! Congratulations, champion.`
               );
             } else if (isCorrection) {
               /*

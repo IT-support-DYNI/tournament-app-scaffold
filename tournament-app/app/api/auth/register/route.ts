@@ -90,13 +90,22 @@ export async function POST(request: Request) {
     // Create user
     // -------------------------
 
+    /*
+     * The very first account in the system becomes ADMIN,
+     * since there would otherwise be no way to grant that
+     * role to anyone. Every account after that is a
+     * regular USER — STAFF/ADMIN can only be granted by an
+     * existing admin from then on.
+     */
+    const isFirstUser =
+      (await prisma.user.count()) === 0;
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash,
-        // role intentionally omitted.
-        // Prisma uses USER by default.
+        role: isFirstUser ? "ADMIN" : "USER",
       },
     });
 

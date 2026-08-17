@@ -2,10 +2,30 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
+import { canCreateTournaments, isAdmin } from "@/lib/authorization";
+import { prisma } from "@/lib/prisma";
 import LogoutButton from "./LogoutButton";
 
 export default async function Navbar() {
   const session = await getServerSession(authOptions);
+
+  const canCreate = Boolean(
+    session?.user?.role &&
+      canCreateTournaments(session.user.role)
+  );
+
+  const admin = Boolean(
+    session?.user?.role && isAdmin(session.user.role)
+  );
+
+  const unreadCount = session?.user?.id
+    ? await prisma.notification.count({
+        where: {
+          userId: Number(session.user.id),
+          read: false,
+        },
+      })
+    : 0;
 
   return (
     <header className="border-b bg-white">
@@ -32,12 +52,14 @@ export default async function Navbar() {
             Tournaments
           </Link>
 
-          <Link
-            href="/tournaments/new"
-            className="text-sm text-gray-700 hover:text-black"
-          >
-            Create Tournament
-          </Link>
+          {canCreate && (
+            <Link
+              href="/tournaments/new"
+              className="text-sm text-gray-700 hover:text-black"
+            >
+              Create Tournament
+            </Link>
+          )}
 
           {session ? (
             <>
@@ -46,6 +68,27 @@ export default async function Navbar() {
                 className="text-sm text-gray-700 hover:text-black"
               >
                 Dashboard
+              </Link>
+
+              {admin && (
+                <Link
+                  href="/admin/users"
+                  className="text-sm text-gray-700 hover:text-black"
+                >
+                  Manage Users
+                </Link>
+              )}
+
+              <Link
+                href="/notifications"
+                className="relative text-sm text-gray-700 hover:text-black"
+              >
+                Notifications
+                {unreadCount > 0 && (
+                  <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
 
               <div className="flex items-center gap-4">

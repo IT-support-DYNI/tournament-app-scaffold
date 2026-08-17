@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageTournament } from "@/lib/authorization";
 
 type RouteContext = {
   params: Promise<{
@@ -52,8 +53,11 @@ export async function GET(
     }
 
     if (
-      tournament.organizerId !==
-      Number(session.user.id)
+      !canManageTournament(
+        session.user.role,
+        Number(session.user.id),
+        tournament.organizerId
+      )
     ) {
       return NextResponse.json(
         {

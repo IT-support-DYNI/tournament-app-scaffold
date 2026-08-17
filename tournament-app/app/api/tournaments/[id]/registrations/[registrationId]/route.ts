@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageTournament } from "@/lib/authorization";
+import { notifyUser } from "@/lib/notify";
 
 type RouteContext = {
   params: Promise<{
@@ -59,8 +61,11 @@ export async function PATCH(
     }
 
     if (
-      tournament.organizerId !==
-      Number(session.user.id)
+      !canManageTournament(
+        session.user.role,
+        Number(session.user.id),
+        tournament.organizerId
+      )
     ) {
       return NextResponse.json(
         {
@@ -117,22 +122,33 @@ export async function PATCH(
     }
 
     if (status === "REJECTED") {
-      const updatedRegistration =
-        await prisma.registration.update({
-          where: {
-            id: registration.id,
-          },
-          data: {
-            status: "REJECTED",
-          },
-        });
+      const updatedRegistration = await prisma.$transaction(
+        async (tx) => {
+          const updated = await tx.registration.update({
+            where: {
+              id: registration.id,
+            },
+            data: {
+              status: "REJECTED",
+            },
+          });
 
-      await prisma.tournamentHistory.create({
-        data: {
-          tournamentId,
-          action: `Registration rejected for ${registration.name}.`,
-        },
-      });
+          await tx.tournamentHistory.create({
+            data: {
+              tournamentId,
+              action: `Registration rejected for ${registration.name}.`,
+            },
+          });
+
+          await notifyUser(
+            tx,
+            registration.userId,
+            `Your registration for "${tournament.name}" was rejected.`
+          );
+
+          return updated;
+        }
+      );
 
       return NextResponse.json({
         message:
@@ -191,6 +207,7 @@ export async function PATCH(
               email: registration.email,
               phone: registration.phone,
               status: "ACTIVE",
+              userId: registration.userId,
             },
           });
 
@@ -200,6 +217,12 @@ export async function PATCH(
             action: `Registration approved for ${registration.name}.`,
           },
         });
+
+        await notifyUser(
+          tx,
+          registration.userId,
+          `Your registration for "${tournament.name}" was approved! You're in.`
+        );
 
         return {
           updatedRegistration,

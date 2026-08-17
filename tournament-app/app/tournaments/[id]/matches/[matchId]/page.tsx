@@ -61,8 +61,6 @@ export default function MatchPage() {
   const [winnerId, setWinnerId] =
     useState("");
 
-  const [notes, setNotes] = useState("");
-
   const [loading, setLoading] =
     useState(true);
 
@@ -304,9 +302,6 @@ export default function MatchPage() {
               winnerId === ""
                 ? null
                 : Number(winnerId),
-
-            notes:
-              notes.trim() || null,
           }),
         }
       );
@@ -632,26 +627,6 @@ export default function MatchPage() {
                 </div>
               </div>
             )}
-
-            {/* Notes */}
-
-            <div>
-              <label className="block text-sm font-medium">
-                Notes
-              </label>
-
-              <textarea
-                value={notes}
-                onChange={(event) =>
-                  setNotes(
-                    event.target.value
-                  )
-                }
-                rows={3}
-                className="mt-2 w-full rounded-md border px-3 py-2"
-                placeholder="Optional match notes..."
-              />
-            </div>
 
             {/* Submit */}
 

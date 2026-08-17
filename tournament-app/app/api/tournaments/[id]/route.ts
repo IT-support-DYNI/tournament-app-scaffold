@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageTournament } from "@/lib/authorization";
 
 type RouteContext = {
   params: Promise<{
@@ -110,7 +111,6 @@ export async function GET(
               player1: true,
               player2: true,
               winner: true,
-              result: true,
             },
           },
 
@@ -250,10 +250,13 @@ export async function PATCH(
       );
     }
 
-    // Only the organizer can edit the tournament.
+    // Only the organizer or an admin can edit the tournament.
     if (
-      tournament.organizerId !==
-      Number(session.user.id)
+      !canManageTournament(
+        session.user.role,
+        Number(session.user.id),
+        tournament.organizerId
+      )
     ) {
       return NextResponse.json(
         {
@@ -560,10 +563,13 @@ export async function DELETE(
       );
     }
 
-    // Only the organizer can delete the tournament.
+    // Only the organizer or an admin can delete the tournament.
     if (
-      tournament.organizerId !==
-      Number(session.user.id)
+      !canManageTournament(
+        session.user.role,
+        Number(session.user.id),
+        tournament.organizerId
+      )
     ) {
       return NextResponse.json(
         {

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageTournament } from "@/lib/authorization";
+import { notifyUser } from "@/lib/notify";
 
 type RouteContext = {
   params: Promise<{
@@ -66,8 +68,11 @@ export async function POST(
     }
 
     if (
-      tournament.organizerId !==
-      Number(session.user.id)
+      !canManageTournament(
+        session.user.role,
+        Number(session.user.id),
+        tournament.organizerId
+      )
     ) {
       return NextResponse.json(
         {
@@ -168,6 +173,12 @@ export async function POST(
             },
           });
 
+          await notifyUser(
+            tx,
+            participant.userId,
+            `You have been withdrawn from "${tournament.name}".`
+          );
+
           return { walkoverWinnerId: null };
         }
 
@@ -183,6 +194,12 @@ export async function POST(
               action: `${participant.name} withdrew from the tournament.`,
             },
           });
+
+          await notifyUser(
+            tx,
+            participant.userId,
+            `You have been withdrawn from "${tournament.name}".`
+          );
 
           return { walkoverWinnerId: null };
         }
@@ -205,6 +222,18 @@ export async function POST(
             action: `${participant.name} withdrew from the tournament; ${opponent.name} advances by walkover.`,
           },
         });
+
+        await notifyUser(
+          tx,
+          participant.userId,
+          `You have been withdrawn from "${tournament.name}".`
+        );
+
+        await notifyUser(
+          tx,
+          opponent.userId,
+          `Your opponent withdrew from "${tournament.name}" — you advance by walkover.`
+        );
 
         // ------------------------------------------------
         // Advance the opponent to the next round, exactly
@@ -231,11 +260,21 @@ export async function POST(
                 roundId: nextRound.id,
                 position: nextPosition,
               },
+              include: {
+                player1: true,
+                player2: true,
+              },
             });
 
           if (nextMatch) {
             const winnerGoesIntoPlayer1 =
               liveMatch.position % 2 === 1;
+
+            const becomesReady = Boolean(
+              winnerGoesIntoPlayer1
+                ? nextMatch.player2Id
+                : nextMatch.player1Id
+            );
 
             await tx.match.update({
               where: {
@@ -244,17 +283,36 @@ export async function POST(
               data: winnerGoesIntoPlayer1
                 ? {
                     player1Id: opponent.id,
-                    status: nextMatch.player2Id
+                    status: becomesReady
                       ? "READY"
                       : "WAITING",
                   }
                 : {
                     player2Id: opponent.id,
-                    status: nextMatch.player1Id
+                    status: becomesReady
                       ? "READY"
                       : "WAITING",
                   },
             });
+
+            if (becomesReady) {
+              const alreadyThereParticipant =
+                winnerGoesIntoPlayer1
+                  ? nextMatch.player2
+                  : nextMatch.player1;
+
+              await notifyUser(
+                tx,
+                opponent.userId,
+                `Your next match in "${tournament.name}" (${nextRound.name}, Match ${nextPosition}) is ready — you're facing ${alreadyThereParticipant?.name ?? "TBD"}.`
+              );
+
+              await notifyUser(
+                tx,
+                alreadyThereParticipant?.userId,
+                `Your next match in "${tournament.name}" (${nextRound.name}, Match ${nextPosition}) is ready — you're facing ${opponent.name}.`
+              );
+            }
           }
         } else {
           // The withdrawal happened in the final.
@@ -274,6 +332,12 @@ export async function POST(
               action: `Tournament completed via walkover. Champion: ${opponent.name}.`,
             },
           });
+
+          await notifyUser(
+            tx,
+            opponent.userId,
+            `You won "${tournament.name}"! Congratulations, champion.`
+          );
         }
 
         return { walkoverWinnerId: opponent.id };
