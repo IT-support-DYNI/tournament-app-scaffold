@@ -72,7 +72,7 @@ export default function DeleteTournamentButton({
         type="button"
         onClick={handleDelete}
         disabled={deleting}
-        className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {deleting ? "Deleting..." : "Delete Tournament"}
       </button>

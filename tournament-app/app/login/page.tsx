@@ -32,7 +32,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
@@ -42,13 +42,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow">
-        <h1 className="mb-2 text-3xl font-bold">
+    <main className="flex min-h-[calc(100vh-65px)] items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-white px-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-lg shadow-sm shadow-emerald-500/30">
+          🏆
+        </span>
+
+        <h1 className="mb-2 mt-4 text-3xl font-extrabold tracking-tight text-slate-900">
           Log in
         </h1>
 
-        <p className="mb-6 text-gray-600">
+        <p className="mb-6 text-slate-600">
           Sign in to your tournament account.
         </p>
 
@@ -56,7 +60,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Email
             </label>
@@ -69,7 +73,7 @@ export default function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               required
               autoComplete="email"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               placeholder="john@example.com"
             />
           </div>
@@ -77,7 +81,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Password
             </label>
@@ -90,14 +94,14 @@ export default function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               required
               autoComplete="current-password"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               placeholder="Your password"
             />
           </div>
 
           {error && (
             <div
-              className="rounded-md bg-red-50 p-3 text-sm text-red-700"
+              className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700"
               role="alert"
             >
               {error}
@@ -107,17 +111,17 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-black px-4 py-2 font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 font-bold text-white shadow-sm shadow-emerald-500/30 transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-slate-600">
           Don't have an account?{" "}
           <Link
             href="/register"
-            className="font-medium text-black underline"
+            className="font-semibold text-emerald-700 hover:text-emerald-800"
           >
             Create one
           </Link>

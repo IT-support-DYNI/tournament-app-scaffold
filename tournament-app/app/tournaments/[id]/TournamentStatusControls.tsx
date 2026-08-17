@@ -90,7 +90,7 @@ export default function TournamentStatusControls({
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+        className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
       >
         {loading ? "Updating..." : next.label}
       </button>

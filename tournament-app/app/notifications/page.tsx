@@ -12,19 +12,17 @@ export default async function NotificationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="text-3xl font-bold">
-          Notifications
-        </h1>
+    <main className="mx-auto max-w-2xl px-6 py-10">
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        Notifications
+      </h1>
 
-        <p className="mt-2 text-gray-600">
-          Updates on tournaments you're registered in.
-        </p>
+      <p className="mt-1 text-slate-600">
+        Updates on tournaments you're registered in.
+      </p>
 
-        <div className="mt-6">
-          <NotificationsList />
-        </div>
+      <div className="mt-6">
+        <NotificationsList />
       </div>
     </main>
   );

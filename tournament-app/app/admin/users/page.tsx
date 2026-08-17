@@ -13,25 +13,23 @@ export default async function AdminUsersPage() {
   }
 
   if (!isAdmin(session.user.role)) {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold">
-          Manage Users
-        </h1>
+    <main className="mx-auto max-w-4xl px-6 py-10">
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        Manage Users
+      </h1>
 
-        <p className="mt-2 text-gray-600">
-          Grant or revoke staff and admin access.
-        </p>
+      <p className="mt-1 text-slate-600">
+        Grant or revoke staff and admin access.
+      </p>
 
-        <div className="mt-6">
-          <AdminUsersTable
-            currentUserId={Number(session.user.id)}
-          />
-        </div>
+      <div className="mt-6">
+        <AdminUsersTable
+          currentUserId={Number(session.user.id)}
+        />
       </div>
     </main>
   );

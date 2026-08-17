@@ -59,33 +59,32 @@ export default function NewTournamentPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">
-            Create Tournament
-          </h1>
+    <main className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          Create Tournament
+        </h1>
 
-          <p className="mt-2 text-gray-600">
-            Set up your tournament and registration settings.
-          </p>
-        </div>
+        <p className="mt-1 text-slate-600">
+          Set up your tournament and registration settings.
+        </p>
+      </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 rounded-lg bg-white p-8 shadow"
-        >
-          {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
+      >
+        {error && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
 
           {/* Tournament name */}
           <div>
             <label
               htmlFor="name"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Tournament Name
             </label>
@@ -97,7 +96,7 @@ export default function NewTournamentPage() {
               onChange={(event) => setName(event.target.value)}
               placeholder="Summer Championship 2026"
               required
-              className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
 
@@ -105,7 +104,7 @@ export default function NewTournamentPage() {
           <div>
             <label
               htmlFor="startDate"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Tournament Start
             </label>
@@ -116,7 +115,7 @@ export default function NewTournamentPage() {
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
               required
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
 
@@ -124,7 +123,7 @@ export default function NewTournamentPage() {
           <div>
             <label
               htmlFor="endDate"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Tournament End
             </label>
@@ -134,20 +133,20 @@ export default function NewTournamentPage() {
               type="datetime-local"
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             />
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-slate-500">
               Optional.
             </p>
           </div>
 
-          <div className="border-t pt-6">
-            <h2 className="text-xl font-semibold">
+          <div className="border-t border-slate-100 pt-6">
+            <h2 className="text-lg font-bold text-slate-900">
               Registration Settings
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Control when players can register.
             </p>
           </div>
@@ -156,7 +155,7 @@ export default function NewTournamentPage() {
           <div>
             <label
               htmlFor="registrationOpen"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Registration Opens
             </label>
@@ -169,7 +168,7 @@ export default function NewTournamentPage() {
                 setRegistrationOpen(event.target.value)
               }
               required
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
 
@@ -177,7 +176,7 @@ export default function NewTournamentPage() {
           <div>
             <label
               htmlFor="registrationClose"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Registration Closes
             </label>
@@ -189,10 +188,10 @@ export default function NewTournamentPage() {
               onChange={(event) =>
                 setRegistrationClose(event.target.value)
               }
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             />
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-slate-500">
               Optional.
             </p>
           </div>
@@ -201,7 +200,7 @@ export default function NewTournamentPage() {
           <div>
             <label
               htmlFor="maxParticipants"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Maximum Participants
             </label>
@@ -215,12 +214,12 @@ export default function NewTournamentPage() {
                 setMaxParticipants(event.target.value)
               }
               required
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
 
           {/* Contact requirement */}
-          <div className="rounded-md border border-gray-200 p-4">
+          <div className="rounded-xl border border-slate-200 p-4">
             <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
@@ -228,15 +227,15 @@ export default function NewTournamentPage() {
                 onChange={(event) =>
                   setNeedsContact(event.target.checked)
                 }
-                className="h-4 w-4"
+                className="h-4 w-4 accent-emerald-600"
               />
 
               <div>
-                <p className="text-sm font-medium">
+                <p className="text-sm font-semibold text-slate-800">
                   Require contact details
                 </p>
 
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Require players to provide contact information
                   when registering.
                 </p>
@@ -248,7 +247,7 @@ export default function NewTournamentPage() {
           <div>
             <label
               htmlFor="drawRule"
-              className="mb-2 block text-sm font-medium"
+              className="mb-2 block text-sm font-semibold text-slate-700"
             >
               Draw Rule
             </label>
@@ -259,7 +258,7 @@ export default function NewTournamentPage() {
               onChange={(event) =>
                 setDrawRule(event.target.value)
               }
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             >
               <option value="DRAW_NOT_ALLOWED">
                 Draws Not Allowed
@@ -272,11 +271,11 @@ export default function NewTournamentPage() {
           </div>
 
           {/* Submit */}
-          <div className="flex justify-end gap-3 border-t pt-6">
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
             <button
               type="button"
               onClick={() => router.push("/tournaments")}
-              className="rounded-md border border-gray-300 px-5 py-2 text-sm font-medium hover:bg-gray-50"
+              className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               Cancel
             </button>
@@ -284,7 +283,7 @@ export default function NewTournamentPage() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-md bg-black px-5 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2 text-sm font-bold text-white shadow-sm shadow-emerald-500/30 transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading
                 ? "Creating..."
@@ -292,7 +291,6 @@ export default function NewTournamentPage() {
             </button>
           </div>
         </form>
-      </div>
     </main>
   );
 }

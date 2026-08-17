@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+import StatusBadge from "@/components/StatusBadge";
+
 type RegistrationStatus =
   | "PENDING"
   | "APPROVED"
@@ -233,162 +235,161 @@ export default function TournamentRegistrationsPage() {
   ).length;
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6">
-          <a
-            href={`/tournaments/${tournamentId}`}
-            className="text-sm text-gray-600 hover:text-black"
-          >
-            ← Back to Tournament
-          </a>
+    <main className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mb-6">
+        <a
+          href={`/tournaments/${tournamentId}`}
+          className="text-sm font-medium text-slate-500 hover:text-slate-800"
+        >
+          ← Back to Tournament
+        </a>
 
-          <h1 className="mt-2 text-3xl font-bold">
-            Tournament Registrations
-          </h1>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">
+          Tournament Registrations
+        </h1>
 
-          <p className="mt-1 text-gray-600">
-            Review and manage player registrations.
+        <p className="mt-1 text-slate-600">
+          Review and manage player registrations.
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+
+      {/* Statistics */}
+
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <button
+          type="button"
+          onClick={() => setFilter("ALL")}
+          className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="text-sm text-slate-500">
+            All Registrations
           </p>
-        </div>
 
-        {error && (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
+          <p className="mt-1 text-2xl font-extrabold text-slate-900">
+            {registrations.length}
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilter("PENDING")}
+          className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="text-sm text-slate-500">
+            Pending
+          </p>
+
+          <p className="mt-1 text-2xl font-extrabold text-amber-600">
+            {pendingCount}
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilter("APPROVED")}
+          className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="text-sm text-slate-500">
+            Approved
+          </p>
+
+          <p className="mt-1 text-2xl font-extrabold text-emerald-600">
+            {approvedCount}
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilter("REJECTED")}
+          className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="text-sm text-slate-500">
+            Rejected
+          </p>
+
+          <p className="mt-1 text-2xl font-extrabold text-rose-600">
+            {rejectedCount}
+          </p>
+        </button>
+      </div>
+
+      {/* Filter */}
+
+      <div className="mb-4 flex gap-2">
+        {(
+          [
+            "ALL",
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+          ] as FilterStatus[]
+        ).map((status) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => setFilter(status)}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              filter === status
+                ? "bg-slate-900 text-white"
+                : "bg-white text-slate-600 shadow-sm hover:bg-slate-100"
+            }`}
+          >
+            {status === "ALL"
+              ? "All"
+              : status}
+          </button>
+        ))}
+      </div>
+
+      {/* Registrations */}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {loading ? (
+          <div className="p-8 text-center text-slate-500">
+            Loading registrations...
           </div>
-        )}
+        ) : filteredRegistrations.length === 0 ? (
+          <div className="p-8 text-center text-slate-500">
+            No registrations found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-slate-100 bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-400">
+                    Player
+                  </th>
 
-        {/* Statistics */}
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-400">
+                    Age
+                  </th>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-4">
-          <button
-            type="button"
-            onClick={() => setFilter("ALL")}
-            className="rounded-lg bg-white p-5 text-left shadow hover:bg-gray-50"
-          >
-            <p className="text-sm text-gray-500">
-              All Registrations
-            </p>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-400">
+                    Club
+                  </th>
 
-            <p className="mt-1 text-2xl font-bold">
-              {registrations.length}
-            </p>
-          </button>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-400">
+                    Contact
+                  </th>
 
-          <button
-            type="button"
-            onClick={() => setFilter("PENDING")}
-            className="rounded-lg bg-white p-5 text-left shadow hover:bg-gray-50"
-          >
-            <p className="text-sm text-gray-500">
-              Pending
-            </p>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-400">
+                    Status
+                  </th>
 
-            <p className="mt-1 text-2xl font-bold">
-              {pendingCount}
-            </p>
-          </button>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase text-slate-400">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
 
-          <button
-            type="button"
-            onClick={() => setFilter("APPROVED")}
-            className="rounded-lg bg-white p-5 text-left shadow hover:bg-gray-50"
-          >
-            <p className="text-sm text-gray-500">
-              Approved
-            </p>
-
-            <p className="mt-1 text-2xl font-bold">
-              {approvedCount}
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFilter("REJECTED")}
-            className="rounded-lg bg-white p-5 text-left shadow hover:bg-gray-50"
-          >
-            <p className="text-sm text-gray-500">
-              Rejected
-            </p>
-
-            <p className="mt-1 text-2xl font-bold">
-              {rejectedCount}
-            </p>
-          </button>
-        </div>
-
-        {/* Filter */}
-
-        <div className="mb-4 flex gap-2">
-          {(
-            [
-              "ALL",
-              "PENDING",
-              "APPROVED",
-              "REJECTED",
-            ] as FilterStatus[]
-          ).map((status) => (
-            <button
-              key={status}
-              type="button"
-              onClick={() => setFilter(status)}
-              className={`rounded-md px-4 py-2 text-sm font-medium ${
-                filter === status
-                  ? "bg-black text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              {status === "ALL"
-                ? "All"
-                : status}
-            </button>
-          ))}
-        </div>
-
-        {/* Registrations */}
-
-        <div className="overflow-hidden rounded-lg bg-white shadow">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500">
-              Loading registrations...
-            </div>
-          ) : filteredRegistrations.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              No registrations found.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
-                      Player
-                    </th>
-
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
-                      Age
-                    </th>
-
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
-                      Club
-                    </th>
-
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
-                      Contact
-                    </th>
-
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
-                      Status
-                    </th>
-
-                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase text-gray-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y">
+              <tbody className="divide-y divide-slate-100">
                   {filteredRegistrations.map(
                     (registration) => (
                       <tr key={registration.id}>
@@ -397,7 +398,7 @@ export default function TournamentRegistrationsPage() {
                             {registration.name}
                           </p>
 
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-slate-500">
                             Registered{" "}
                             {new Date(
                               registration.createdAt
@@ -418,25 +419,15 @@ export default function TournamentRegistrationsPage() {
                             {registration.email || "—"}
                           </div>
 
-                          <div className="text-gray-500">
+                          <div className="text-slate-500">
                             {registration.phone || ""}
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${
-                              registration.status ===
-                              "PENDING"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : registration.status ===
-                                    "APPROVED"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {registration.status}
-                          </span>
+                          <StatusBadge
+                            status={registration.status}
+                          />
                         </td>
 
                         <td className="px-6 py-4 text-right">
@@ -455,7 +446,7 @@ export default function TournamentRegistrationsPage() {
                                     "APPROVED"
                                   )
                                 }
-                                className="rounded-md bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                                className="rounded-full bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                               >
                                 Approve
                               </button>
@@ -472,7 +463,7 @@ export default function TournamentRegistrationsPage() {
                                     "REJECTED"
                                   )
                                 }
-                                className="rounded-md bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                className="rounded-full bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
                               >
                                 Reject
                               </button>
@@ -498,7 +489,7 @@ export default function TournamentRegistrationsPage() {
                                     registration.name
                                   )
                                 }
-                                className="rounded-md bg-orange-600 px-3 py-2 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+                                className="rounded-full bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
                               >
                                 Withdraw
                               </button>
@@ -509,14 +500,14 @@ export default function TournamentRegistrationsPage() {
                             registration.participant &&
                             registration.participant
                               .status !== "ACTIVE" && (
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-slate-500">
                                 Withdrawn
                               </span>
                             )}
 
                           {registration.status ===
                             "REJECTED" && (
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-slate-500">
                               Rejected
                             </span>
                           )}
@@ -528,7 +519,6 @@ export default function TournamentRegistrationsPage() {
               </table>
             </div>
           )}
-        </div>
       </div>
     </main>
   );

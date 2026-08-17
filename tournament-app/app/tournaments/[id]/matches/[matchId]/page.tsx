@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
+import StatusBadge from "@/components/StatusBadge";
+
 type Participant = {
   id: number;
   name: string;
@@ -349,7 +351,7 @@ export default function MatchPage() {
 
   if (loading) {
     return (
-      <main className="p-8">
+      <main className="px-6 py-10 text-slate-500">
         Loading match...
       </main>
     );
@@ -357,12 +359,12 @@ export default function MatchPage() {
 
   if (!match) {
     return (
-      <main className="p-8">
-        <h1 className="text-2xl font-bold">
+      <main className="px-6 py-10">
+        <h1 className="text-2xl font-bold text-slate-900">
           Match not found
         </h1>
 
-        <p className="mt-2 text-red-600">
+        <p className="mt-2 text-rose-600">
           {error}
         </p>
       </main>
@@ -370,57 +372,56 @@ export default function MatchPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-2xl">
-        <Link
-          href={`/tournaments/${tournamentId}/bracket`}
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          ← Back to bracket
-        </Link>
+    <main className="mx-auto max-w-2xl px-6 py-10">
+      <Link
+        href={`/tournaments/${tournamentId}/bracket`}
+        className="text-sm font-medium text-slate-500 hover:text-slate-800"
+      >
+        ← Back to bracket
+      </Link>
 
-        <div className="mt-6 rounded-lg bg-white p-6 shadow">
-          {/* Match header */}
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {/* Match header */}
 
-          <div className="mb-6">
-            <p className="text-sm text-gray-500">
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-slate-400">
               {match.round.name}
             </p>
 
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
               Match {match.position}
             </h1>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Status: {match.status}
-            </p>
           </div>
 
-          {/* Error */}
+          <StatusBadge status={match.status} />
+        </div>
 
-          {error && (
-            <div className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-700">
-              {error}
+        {/* Error */}
+
+        {error && (
+          <div className="mb-6 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
+
+        {match.status === "COMPLETED" && (
+          <div className="mb-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+            This match is already completed. Submitting
+            a new result will correct it and may reset
+            any later rounds that were built on the
+            previous winner.
+          </div>
+        )}
+
+        {match.status !== "COMPLETED" &&
+          match.resultType === "DRAW" && (
+            <div className="mb-6 rounded-xl bg-sky-50 p-4 text-sm text-sky-800">
+              This match ended in a draw and needs a
+              replay. Submit a decisive result below —
+              or select Draw again if it's still tied.
             </div>
           )}
-
-          {match.status === "COMPLETED" && (
-            <div className="mb-6 rounded-md bg-amber-50 p-4 text-sm text-amber-800">
-              This match is already completed. Submitting
-              a new result will correct it and may reset
-              any later rounds that were built on the
-              previous winner.
-            </div>
-          )}
-
-          {match.status !== "COMPLETED" &&
-            match.resultType === "DRAW" && (
-              <div className="mb-6 rounded-md bg-blue-50 p-4 text-sm text-blue-800">
-                This match ended in a draw and needs a
-                replay. Submit a decisive result below —
-                or select Draw again if it's still tied.
-              </div>
-            )}
 
           {/* Result form */}
 
@@ -430,8 +431,8 @@ export default function MatchPage() {
           >
             {/* Player 1 */}
 
-            <div className="rounded-lg border p-4">
-              <label className="block text-sm font-medium">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <label className="block text-sm font-semibold text-slate-700">
                 {match.player1?.name ??
                   "Player 1"}
               </label>
@@ -445,7 +446,7 @@ export default function MatchPage() {
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-md border px-3 py-2"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50"
                 placeholder="Score"
                 disabled={
                   resultType === "WALKOVER"
@@ -455,8 +456,8 @@ export default function MatchPage() {
 
             {/* Player 2 */}
 
-            <div className="rounded-lg border p-4">
-              <label className="block text-sm font-medium">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <label className="block text-sm font-semibold text-slate-700">
                 {match.player2?.name ??
                   "Player 2"}
               </label>
@@ -470,7 +471,7 @@ export default function MatchPage() {
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-md border px-3 py-2"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50"
                 placeholder="Score"
                 disabled={
                   resultType === "WALKOVER"
@@ -481,7 +482,7 @@ export default function MatchPage() {
             {/* Result type */}
 
             <div>
-              <label className="block text-sm font-medium">
+              <label className="block text-sm font-semibold text-slate-700">
                 Result type
               </label>
 
@@ -503,7 +504,7 @@ export default function MatchPage() {
                     setWinnerId("");
                   }
                 }}
-                className="mt-2 w-full rounded-md border px-3 py-2"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               >
                 <option value="NORMAL">
                   Normal
@@ -530,7 +531,7 @@ export default function MatchPage() {
               resultType ===
                 "PENALTY") && (
               <div>
-                <label className="block text-sm font-medium">
+                <label className="block text-sm font-semibold text-slate-700">
                   Winner
                 </label>
 
@@ -541,7 +542,7 @@ export default function MatchPage() {
                       event.target.value
                     )
                   }
-                  className="mt-2 w-full rounded-md border px-3 py-2"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   required
                 >
                   <option value="">
@@ -577,7 +578,7 @@ export default function MatchPage() {
               "PENALTY" && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium">
+                  <label className="block text-sm font-semibold text-slate-700">
                     {
                       match.player1
                         ?.name
@@ -596,13 +597,13 @@ export default function MatchPage() {
                         event.target.value
                       )
                     }
-                    className="mt-2 w-full rounded-md border px-3 py-2"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                     placeholder="Penalty score"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">
+                  <label className="block text-sm font-semibold text-slate-700">
                     {
                       match.player2
                         ?.name
@@ -621,7 +622,7 @@ export default function MatchPage() {
                         event.target.value
                       )
                     }
-                    className="mt-2 w-full rounded-md border px-3 py-2"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                     placeholder="Penalty score"
                   />
                 </div>
@@ -633,7 +634,7 @@ export default function MatchPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-md bg-black px-4 py-3 font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3 font-bold text-white shadow-sm shadow-emerald-500/30 transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting
                 ? "Submitting..."
@@ -642,7 +643,6 @@ export default function MatchPage() {
                   : "Submit Result"}
             </button>
           </form>
-        </div>
       </div>
     </main>
   );

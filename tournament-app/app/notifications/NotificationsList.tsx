@@ -100,7 +100,7 @@ export default function NotificationsList() {
 
   if (loading) {
     return (
-      <p className="text-gray-600">
+      <p className="text-slate-500">
         Loading notifications...
       </p>
     );
@@ -109,7 +109,7 @@ export default function NotificationsList() {
   return (
     <div>
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           {error}
         </div>
       )}
@@ -120,7 +120,7 @@ export default function NotificationsList() {
             type="button"
             onClick={markAllRead}
             disabled={markingAll}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
           >
             Mark all as read
           </button>
@@ -128,11 +128,11 @@ export default function NotificationsList() {
       )}
 
       {notifications.length === 0 ? (
-        <div className="rounded-lg bg-white p-8 text-center text-gray-500 shadow">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
           No notifications yet.
         </div>
       ) : (
-        <ul className="overflow-hidden rounded-lg bg-white shadow">
+        <ul className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {notifications.map((notification) => (
             <li
               key={notification.id}
@@ -140,15 +140,15 @@ export default function NotificationsList() {
                 !notification.read &&
                 markRead(notification.id)
               }
-              className={`flex items-start justify-between gap-4 border-b p-4 text-sm last:border-0 ${
+              className={`flex items-start justify-between gap-4 border-b border-slate-100 p-4 text-sm last:border-0 ${
                 notification.read
-                  ? "text-gray-500"
-                  : "cursor-pointer bg-blue-50 font-medium text-gray-900"
+                  ? "text-slate-500"
+                  : "cursor-pointer bg-emerald-50/60 font-medium text-slate-900"
               }`}
             >
               <span>{notification.message}</span>
 
-              <span className="whitespace-nowrap text-xs text-gray-400">
+              <span className="whitespace-nowrap text-xs text-slate-400">
                 {new Date(
                   notification.createdAt
                 ).toLocaleString()}

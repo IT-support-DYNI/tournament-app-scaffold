@@ -162,43 +162,40 @@ export default function EditTournamentPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-gray-600">
-            Loading tournament...
-          </p>
-        </div>
+      <main className="mx-auto max-w-3xl px-6 py-10">
+        <p className="text-slate-600">
+          Loading tournament...
+        </p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-6">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="text-sm text-gray-600 hover:text-black"
-          >
-            ← Back
-          </button>
+    <main className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-sm font-medium text-slate-500 hover:text-slate-800"
+        >
+          ← Back
+        </button>
 
-          <h1 className="mt-2 text-3xl font-bold">
-            Edit Tournament
-          </h1>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">
+          Edit Tournament
+        </h1>
 
-          <p className="mt-1 text-gray-600">
-            Update the tournament settings below.
-          </p>
-        </div>
+        <p className="mt-1 text-slate-600">
+          Update the tournament settings below.
+        </p>
+      </div>
 
-        <div className="rounded-lg bg-white p-6 shadow">
-          {error && (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {error && (
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Tournament name */}
@@ -206,7 +203,7 @@ export default function EditTournamentPage() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Tournament Name
               </label>
@@ -219,7 +216,7 @@ export default function EditTournamentPage() {
                   setName(event.target.value)
                 }
                 required
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
@@ -228,7 +225,7 @@ export default function EditTournamentPage() {
             <div>
               <label
                 htmlFor="startDate"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Start Date
               </label>
@@ -241,7 +238,7 @@ export default function EditTournamentPage() {
                   setStartDate(event.target.value)
                 }
                 required
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
@@ -250,7 +247,7 @@ export default function EditTournamentPage() {
             <div>
               <label
                 htmlFor="endDate"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 End Date
               </label>
@@ -262,10 +259,10 @@ export default function EditTournamentPage() {
                 onChange={(event) =>
                   setEndDate(event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-slate-500">
                 Optional.
               </p>
             </div>
@@ -275,7 +272,7 @@ export default function EditTournamentPage() {
             <div>
               <label
                 htmlFor="registrationOpen"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Registration Opens
               </label>
@@ -288,7 +285,7 @@ export default function EditTournamentPage() {
                   setRegistrationOpen(event.target.value)
                 }
                 required
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
@@ -297,7 +294,7 @@ export default function EditTournamentPage() {
             <div>
               <label
                 htmlFor="registrationClose"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Registration Closes
               </label>
@@ -309,10 +306,10 @@ export default function EditTournamentPage() {
                 onChange={(event) =>
                   setRegistrationClose(event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-slate-500">
                 Optional.
               </p>
             </div>
@@ -322,7 +319,7 @@ export default function EditTournamentPage() {
             <div>
               <label
                 htmlFor="maxParticipants"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Maximum Participants
               </label>
@@ -336,13 +333,13 @@ export default function EditTournamentPage() {
                   setMaxParticipants(event.target.value)
                 }
                 required
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
             {/* Contact requirement */}
 
-            <div className="rounded-md border border-gray-200 p-4">
+            <div className="rounded-xl border border-slate-200 p-4">
               <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -350,15 +347,15 @@ export default function EditTournamentPage() {
                   onChange={(event) =>
                     setNeedsContact(event.target.checked)
                   }
-                  className="h-4 w-4"
+                  className="h-4 w-4 accent-emerald-600"
                 />
 
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-semibold text-slate-700">
                   Require contact information
                 </span>
               </label>
 
-              <p className="mt-1 ml-7 text-xs text-gray-500">
+              <p className="mt-1 ml-7 text-xs text-slate-500">
                 Players will need to provide contact details
                 when registering.
               </p>
@@ -369,7 +366,7 @@ export default function EditTournamentPage() {
             <div>
               <label
                 htmlFor="drawRule"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Draw Rule
               </label>
@@ -382,7 +379,7 @@ export default function EditTournamentPage() {
                     event.target.value as Tournament["drawRule"]
                   )
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               >
                 <option value="DRAW_NOT_ALLOWED">
                   Draws Not Allowed
@@ -400,14 +397,14 @@ export default function EditTournamentPage() {
 
             {/* Buttons */}
 
-            <div className="flex items-center justify-end gap-3 border-t pt-6">
+            <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
               <button
                 type="button"
                 onClick={() =>
                   router.push(`/tournaments/${id}`)
                 }
                 disabled={saving}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -415,13 +412,12 @@ export default function EditTournamentPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-black px-5 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2 text-sm font-bold text-white shadow-sm shadow-emerald-500/30 transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </form>
-        </div>
       </div>
     </main>
   );

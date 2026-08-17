@@ -79,60 +79,59 @@ export default function RegisterTournamentPage() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-2xl">
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <h1 className="text-2xl font-bold">
-              Registration Submitted
-            </h1>
+      <main className="mx-auto max-w-2xl px-6 py-10">
+        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-8 text-center shadow-sm">
+          <p className="text-4xl">🎉</p>
 
-            <p className="mt-3 text-gray-600">
-              Your registration has been submitted
-              successfully.
-            </p>
+          <h1 className="mt-3 text-2xl font-extrabold text-slate-900">
+            Registration Submitted
+          </h1>
 
-            <p className="mt-2 text-sm text-gray-500">
-              Your registration is currently pending
-              approval.
-            </p>
+          <p className="mt-3 text-slate-600">
+            Your registration has been submitted
+            successfully.
+          </p>
 
-            <button
-              type="button"
-              onClick={() =>
-                router.push(`/tournaments/${id}`)
-              }
-              className="mt-6 rounded-md bg-black px-5 py-2 text-sm font-medium text-white hover:bg-gray-800"
-            >
-              Back to Tournament
-            </button>
-          </div>
+          <p className="mt-2 text-sm text-slate-500">
+            Your registration is currently pending
+            approval.
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              router.push(`/tournaments/${id}`)
+            }
+            className="mt-6 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-emerald-500/30 transition hover:shadow-md"
+          >
+            Back to Tournament
+          </button>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-2xl">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          ← Back
-        </button>
+    <main className="mx-auto max-w-2xl px-6 py-10">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="text-sm font-medium text-slate-500 hover:text-slate-800"
+      >
+        ← Back
+      </button>
 
-        <h1 className="mt-3 text-3xl font-bold">
-          Register for Tournament
-        </h1>
+      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
+        Register for Tournament
+      </h1>
 
-        <p className="mt-2 text-gray-600">
-          Enter your details below to register.
-        </p>
+      <p className="mt-2 text-slate-600">
+        Enter your details below to register.
+      </p>
 
-        <div className="mt-6 rounded-lg bg-white p-6 shadow">
-          {error && (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {error && (
+            <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
               {error}
             </div>
           )}
@@ -144,7 +143,7 @@ export default function RegisterTournamentPage() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Name *
               </label>
@@ -157,14 +156,14 @@ export default function RegisterTournamentPage() {
                   setName(event.target.value)
                 }
                 required
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
             <div>
               <label
                 htmlFor="age"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Age *
               </label>
@@ -179,14 +178,14 @@ export default function RegisterTournamentPage() {
                   setAge(event.target.value)
                 }
                 required
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
             <div>
               <label
                 htmlFor="club"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Club
               </label>
@@ -198,14 +197,14 @@ export default function RegisterTournamentPage() {
                 onChange={(event) =>
                   setClub(event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Email
               </label>
@@ -217,14 +216,14 @@ export default function RegisterTournamentPage() {
                 onChange={(event) =>
                   setEmail(event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
             <div>
               <label
                 htmlFor="phone"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-semibold text-slate-700"
               >
                 Phone
               </label>
@@ -236,21 +235,20 @@ export default function RegisterTournamentPage() {
                 onChange={(event) =>
                   setPhone(event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-md bg-black px-5 py-3 font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-3 font-bold text-white shadow-sm shadow-emerald-500/30 transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting
                 ? "Submitting..."
                 : "Submit Registration"}
             </button>
           </form>
-        </div>
       </div>
     </main>
   );
