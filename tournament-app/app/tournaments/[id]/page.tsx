@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { canManageTournament } from "@/lib/authorization";
+import { prisma } from "@/lib/prisma";
 import StatusBadge from "@/components/StatusBadge";
 import DeleteTournamentButton from "./DeleteTournamentButton";
 import GenerateBracketButton from "./GenerateBracketButton";
@@ -20,22 +21,42 @@ export default async function TournamentPage({
 }: TournamentPageProps) {
   const { id } = await params;
 
-  const response = await fetch(
-    `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/api/tournaments/${id}`,
-    {
-      cache: "no-store",
-    }
-  );
+  const tournamentId = Number(id);
 
-  if (response.status === 404) {
+  if (!Number.isInteger(tournamentId)) {
     notFound();
   }
 
-  if (!response.ok) {
-    throw new Error("Failed to load tournament.");
-  }
+  /*
+   * Query directly instead of calling our own API route
+   * over HTTP — that self-fetch pattern needed a base URL
+   * (hardcoded localhost fallback) that has no meaning in
+   * a serverless deployment. This page only ever renders
+   * aggregate counts and names, never raw registration/
+   * participant contact data, so there's no need to reuse
+   * the API route's PII-scrubbing logic here.
+   */
+  const tournament = await prisma.tournament.findUnique({
+    where: { id: tournamentId },
+    include: {
+      organizer: {
+        select: { name: true, email: true },
+      },
+      champion: {
+        select: { name: true },
+      },
+      history: {
+        orderBy: { createdAt: "desc" },
+      },
+      _count: {
+        select: { registrations: true, participants: true },
+      },
+    },
+  });
 
-  const tournament = await response.json();
+  if (!tournament) {
+    notFound();
+  }
 
   const session = await getServerSession(authOptions);
 
@@ -225,11 +246,7 @@ export default async function TournamentPage({
 
             <ul className="mt-4 divide-y divide-slate-100">
               {tournament.history.map(
-                (entry: {
-                  id: number;
-                  action: string;
-                  createdAt: string;
-                }) => (
+                (entry) => (
                   <li
                     key={entry.id}
                     className="flex items-start justify-between gap-4 py-3 text-sm first:pt-0 last:pb-0"
@@ -239,9 +256,7 @@ export default async function TournamentPage({
                     </span>
 
                     <span className="whitespace-nowrap text-xs text-slate-400">
-                      {new Date(
-                        entry.createdAt
-                      ).toLocaleString()}
+                      {entry.createdAt.toLocaleString()}
                     </span>
                   </li>
                 )
